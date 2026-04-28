@@ -47,11 +47,11 @@ function formatNTDCompact(value) {
     const sign = value < 0 ? '-' : '';
     
     if (wanValue >= 1000) {
-      // 超過千萬，保留一位小數
-      return `${sign}NT$${(wanValue / 1000).toFixed(1)}千萬`;
+      // 超過千萬，顯示整數萬（例如 3800萬）
+      return `${sign}NT$${Math.round(Math.abs(wanValue)).toLocaleString('zh-TW')}萬`;
     } else {
       // 百萬到千萬之間，顯示整數萬
-      return `${sign}NT$${Math.round(wanValue)}萬`;
+      return `${sign}NT$${Math.round(Math.abs(wanValue))}萬`;
     }
   } else {
     // 小於百萬，正常顯示

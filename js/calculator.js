@@ -474,14 +474,15 @@ export function validateExchangeRate(x) {
  * }}
  */
 export function calculatePieChartData(totals) {
-  const labels = ['投資資產', '流動資產', '債務'];
-  const values = [totals.investmentTotal, totals.liquidTotal, totals.totalLiabilities];
+  const labels = ['投資資產', '債務'];
+  const investTotal = (totals.investmentTotal || 0) + (totals.liquidTotal || 0);
+  const values = [investTotal, totals.totalLiabilities];
 
   const total = values.reduce((sum, v) => sum + v, 0);
 
   let percentages;
   if (total === 0) {
-    percentages = [0, 0, 0];
+    percentages = [0, 0];
   } else {
     percentages = values.map(v => (v / total) * 100);
   }

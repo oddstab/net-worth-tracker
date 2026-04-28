@@ -173,12 +173,12 @@ describe('calculateMonthlyGrowthRate', () => {
 describe('calculatePieChartData', () => {
   it('回傳正確的 labels', () => {
     const data = calculatePieChartData({ investmentTotal: 300, liquidTotal: 100, totalLiabilities: 100 });
-    expect(data.labels).toEqual(['投資資產', '流動資產', '債務']);
+    expect(data.labels).toEqual(['投資資產', '債務']);
   });
 
-  it('回傳正確的 values', () => {
+  it('回傳正確的 values（投資+流動合併）', () => {
     const data = calculatePieChartData({ investmentTotal: 300, liquidTotal: 100, totalLiabilities: 100 });
-    expect(data.values).toEqual([300, 100, 100]);
+    expect(data.values).toEqual([400, 100]);
   });
 
   it('percentages 加總約為 100', () => {
@@ -189,14 +189,13 @@ describe('calculatePieChartData', () => {
 
   it('所有值為 0 時 percentages 全為 0', () => {
     const data = calculatePieChartData({ investmentTotal: 0, liquidTotal: 0, totalLiabilities: 0 });
-    expect(data.percentages).toEqual([0, 0, 0]);
+    expect(data.percentages).toEqual([0, 0]);
   });
 
-  it('比例計算正確（各佔 60%、20%、20%）', () => {
+  it('比例計算正確（80% 資產、20% 債務）', () => {
     const data = calculatePieChartData({ investmentTotal: 300, liquidTotal: 100, totalLiabilities: 100 });
-    expect(data.percentages[0]).toBeCloseTo(60, 5);
+    expect(data.percentages[0]).toBeCloseTo(80, 5);
     expect(data.percentages[1]).toBeCloseTo(20, 5);
-    expect(data.percentages[2]).toBeCloseTo(20, 5);
   });
 });
 

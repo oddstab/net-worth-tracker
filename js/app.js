@@ -209,11 +209,28 @@ async function initPriceFetcher() {
 
 /**
  * 註冊 Service Worker（僅在支援的瀏覽器中執行）。
+ * 自動檢測更新並立即啟用新版本。
  */
 function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').then(() => {
+    navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then(reg => {
       console.log('[App] Service Worker 已註冊');
+      
+      // 檢測到新版本時自動更新
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'activated') {
+              console.log('[App] 新版 Service Worker 已啟用，重新載入頁面');
+              window.location.reload();
+            }
+          });
+        }
+      });
+      
+      // 每次載入頁面時檢查更新
+      reg.update();
     }).catch(err => {
       console.warn('[App] Service Worker 註冊失敗：', err);
     });
