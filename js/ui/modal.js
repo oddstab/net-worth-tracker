@@ -38,6 +38,12 @@ export function closeModal() {
   overlay.classList.add('hidden');
   modalBody.innerHTML = '';
   modalEl.classList.remove('modal--wide');
+  
+  // 清理 footer 內容
+  const modalFooter = document.getElementById('modal-footer');
+  if (modalFooter) {
+    modalFooter.innerHTML = '';
+  }
 }
 
 // ─── 欄位錯誤 ─────────────────────────────────────────────────────────────────
@@ -479,17 +485,22 @@ export function openAssetModal(asset = null) {
     + '<span class="form-error" id="asset-price-error" style="display:none;"></span>'
     + '</div></div>'
 
-    // 按鈕
-    + '<div class="modal-actions">'
-    + '<button type="button" class="btn btn-secondary" id="modal-cancel">取消</button>'
-    + '<button type="submit" class="btn btn-primary">儲存</button>'
-    + '</div></form></div>'
+    // 按鈕（移到 footer）
+    + '</form></div>'
 
     // 右側摘要
     + '<div class="asset-summary-col hidden" id="asset-summary-col">'
     + '<div class="summary-panel" id="asset-summary-panel">'
     + '<div class="summary-placeholder"><span>搜尋並選擇股票或加密貨幣<br/>即可查看詳細資訊</span></div>'
     + '</div></div></div>';
+
+  // 將按鈕添加到 footer
+  const modalFooter = document.getElementById('modal-footer');
+  if (modalFooter) {
+    modalFooter.innerHTML = 
+      '<button type="button" class="btn btn-secondary" id="modal-cancel">取消</button>'
+      + '<button type="submit" class="btn btn-primary" form="asset-form">儲存</button>';
+  }
 
   overlay.classList.remove('hidden');
 
@@ -632,10 +643,15 @@ export function openLiabilityModal(liability = null) {
     + ' value="' + amount + '" min="0" step="any" required />'
     + '<span class="form-error" id="liability-amount-error" style="display:none;"></span>'
     + '</div></div>'
-    + '<div class="modal-actions">'
-    + '<button type="button" class="btn btn-secondary" id="modal-cancel">取消</button>'
-    + '<button type="submit" class="btn btn-primary">儲存</button>'
-    + '</div></form>';
+    + '</form>';
+
+  // 將按鈕添加到 footer
+  const modalFooter = document.getElementById('modal-footer');
+  if (modalFooter) {
+    modalFooter.innerHTML = 
+      '<button type="button" class="btn btn-secondary" id="modal-cancel">取消</button>'
+      + '<button type="submit" class="btn btn-primary" form="liability-form">儲存</button>';
+  }
 
   overlay.classList.remove('hidden');
   document.getElementById('modal-cancel').addEventListener('click', closeModal);

@@ -140,12 +140,13 @@ describe('calculateMonthlyGrowthRate', () => {
     expect(calculateMonthlyGrowthRate(snapshots)).toBeNull();
   });
 
-  it('無上月同日（±3天容差）快照時回傳 null', () => {
+  it('無上月同日（±3天容差）快照時計算估算月增率', () => {
     const snapshots = [
       { date: '2025-06-15', netWorth: 110 },
       { date: '2025-04-01', netWorth: 100 }, // 超過 ±3 天容差
     ];
-    expect(calculateMonthlyGrowthRate(snapshots)).toBeNull();
+    // 應該計算估算月增率：(110-100)/100 * 100 = 10%，期間75天，估算30天增率 = 10/75*30 = 4%
+    expect(calculateMonthlyGrowthRate(snapshots)).toBeCloseTo(4, 1);
   });
 
   it('上月快照在容差範圍內（+2天）仍可計算', () => {

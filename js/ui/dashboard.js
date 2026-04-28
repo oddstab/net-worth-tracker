@@ -24,12 +24,39 @@ const PIE_COLORS = ['#7c6af7', '#4ade80', '#f87171'];
 // ─── 格式化輔助 ───────────────────────────────────────────────────────────────
 
 /**
- * 將數字格式化為 NT$X,XXX,XXX 格式。
+ * 將數字格式化為 NT$X,XXX,XXX 格式（完整顯示）。
  * @param {number} value
  * @returns {string}
  */
 function formatNTD(value) {
   return 'NT$' + Math.round(value).toLocaleString('zh-TW');
+}
+
+/**
+ * 將數字格式化為簡潔的萬元格式（用於圓餅圖中央）。
+ * @param {number} value
+ * @returns {string}
+ */
+function formatNTDCompact(value) {
+  const absValue = Math.abs(value);
+  const roundedValue = Math.round(value);
+  
+  if (absValue >= 1000000) {
+    // 超過百萬，顯示為萬元
+    const wanValue = roundedValue / 10000;
+    const sign = value < 0 ? '-' : '';
+    
+    if (wanValue >= 1000) {
+      // 超過千萬，保留一位小數
+      return `${sign}NT$${(wanValue / 1000).toFixed(1)}千萬`;
+    } else {
+      // 百萬到千萬之間，顯示整數萬
+      return `${sign}NT$${Math.round(wanValue)}萬`;
+    }
+  } else {
+    // 小於百萬，正常顯示
+    return 'NT$' + roundedValue.toLocaleString('zh-TW');
+  }
 }
 
 // ─── 圓餅圖實例 ───────────────────────────────────────────────────────────────
@@ -80,10 +107,10 @@ export function renderQuickStats(currentState) {
     investmentEl.textContent = formatNTD(totals.investmentTotal);
   }
 
-  // ── 流動資產 ──
-  const liquidEl = document.getElementById('stat-liquid-total');
-  if (liquidEl) {
-    liquidEl.textContent = formatNTD(totals.liquidTotal);
+  // ── 淨資產 ──
+  const netWorthEl = document.getElementById('stat-net-worth');
+  if (netWorthEl) {
+    netWorthEl.textContent = formatNTD(totals.netWorth);
   }
 
   // ── 債務 ──
@@ -149,7 +176,7 @@ export function renderPieChart(currentState) {
     }
     
     netWorthEl.innerHTML = `
-      <div class="net-worth-amount">${formatNTD(totals.netWorth)}</div>
+      <div class="net-worth-amount">${formatNTDCompact(totals.netWorth)}</div>
       ${dailyText ? `<div class="net-worth-daily ${dailyRate >= 0 ? 'positive' : 'negative'}">${dailyText}</div>` : ''}
     `;
   }
@@ -180,36 +207,14 @@ export function renderPieChart(currentState) {
       `;
     }
     
-    // 流動資產詳細列表
-    if (breakdown.liquidAssets.length > 0) {
-      legendHtml += `
-        <div class="legend-category">
-          <div class="legend-category-header">
-            <span class="legend-dot" style="background-color: ${PIE_COLORS[1]};"></span>
-            <span class="legend-category-title">流動資產</span>
-            <span class="legend-category-total">${formatNTD(totals.liquidTotal)} (${pieData.percentages[1].toFixed(1)}%)</span>
-          </div>
-          <div class="legend-items">
-            ${breakdown.liquidAssets.map(item => `
-              <div class="legend-item-detail">
-                <span class="legend-item-name">${item.name}</span>
-                <span class="legend-item-amount">${formatNTD(item.amount)}</span>
-                <span class="legend-item-percent">${item.percentage.toFixed(1)}%</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-    
     // 負債詳細列表
     if (breakdown.liabilityItems.length > 0) {
       legendHtml += `
         <div class="legend-category">
           <div class="legend-category-header">
-            <span class="legend-dot" style="background-color: ${PIE_COLORS[2]};"></span>
+            <span class="legend-dot" style="background-color: ${PIE_COLORS[1]};"></span>
             <span class="legend-category-title">債務</span>
-            <span class="legend-category-total">${formatNTD(totals.totalLiabilities)} (${pieData.percentages[2].toFixed(1)}%)</span>
+            <span class="legend-category-total">${formatNTD(totals.totalLiabilities)} (${pieData.percentages[1].toFixed(1)}%)</span>
           </div>
           <div class="legend-items">
             ${breakdown.liabilityItems.map(item => `

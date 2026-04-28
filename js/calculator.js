@@ -59,6 +59,8 @@ export function calculateAssetTWD(asset, rate) {
  *   totalAssets: number,
  *   creditTotal: number,
  *   pledgeTotal: number,
+ *   mortgageTotal: number,
+ *   otherLiabilityTotal: number,
  *   totalLiabilities: number,
  *   netWorth: number
  * }}
@@ -261,7 +263,97 @@ function calculateEstimatedMonthlyRate(sorted, latest, latestDate) {
   return estimatedMonthlyRate;
 }
 
-// ─── 圓餅圖資料 ──────────────────────────────────────────────────────────────
+// ─── 資產整合輔助函數 ─────────────────────────────────────────────────────────
+
+/**
+ * 為現有資產添加股票代號（遷移函數）
+ * @param {Array} assets 資產陣列
+ * @returns {Array} 更新後的資產陣列
+ */
+function migrateAssetsWithSymbols(assets) {
+  const symbolMap = {
+    '元大台灣50正2': '00631L',
+    '智邦': '2345',
+    '台積電': '2330',
+    '聯發科': '2454',
+    '鴻海': '2317',
+    '台達電': '2308',
+    '群益臺灣加權正2': '00685L',
+    '群益臺灣加權正二': '00685L',
+    '群益台灣加權正2': '00685L',
+    '群益台灣加權正二': '00685L',
+    // 可以繼續添加更多股票代號對應
+  };
+  
+  return assets.map(asset => {
+    if (!asset.symbol && asset.name) {
+      // 嘗試從名稱中提取或對應股票代號
+      const symbol = symbolMap[asset.name.trim()];
+      if (symbol) {
+        return { ...asset, symbol };
+      }
+    }
+    return asset;
+  });
+}
+
+/**
+ * 將相同股票代號的資產整合在一起
+ * @param {Array} assets 資產陣列
+ * @param {number} rate 匯率
+ * @returns {Array} 整合後的資產陣列
+ */
+export function consolidateAssets(assets, rate) {
+  // 先進行遷移，為現有資產添加股票代號
+  const migratedAssets = migrateAssetsWithSymbols(assets);
+  
+  const consolidated = new Map();
+  
+  migratedAssets.forEach(asset => {
+    // 優先使用 symbol 作為整合的 key
+    let key = asset.symbol;
+    if (!key) {
+      // 如果沒有 symbol，使用標準化的名稱
+      key = asset.name.replace(/\s+/g, '').toLowerCase();
+    }
+    
+    if (consolidated.has(key)) {
+      // 合併相同股票
+      const existing = consolidated.get(key);
+      const existingTotalValue = existing.quantity * existing.pricePerUnit * (existing.currency === 'USD' ? rate : 1);
+      const currentTotalValue = asset.quantity * asset.pricePerUnit * (asset.currency === 'USD' ? rate : 1);
+      const totalValue = existingTotalValue + currentTotalValue;
+      const totalQuantity = existing.quantity + asset.quantity;
+      
+      // 計算加權平均價格（以TWD為基準）
+      const avgPriceTWD = totalValue / totalQuantity;
+      // 轉換回原幣別（假設使用第一筆的幣別）
+      const avgPrice = existing.currency === 'USD' ? avgPriceTWD / rate : avgPriceTWD;
+      
+      existing.quantity = totalQuantity;
+      existing.pricePerUnit = avgPrice;
+      existing.holdings.push(asset); // 保存原始持股記錄
+      
+      // 更新最後更新時間（取最新的）
+      if (asset.lastPriceUpdate && (!existing.lastPriceUpdate || asset.lastPriceUpdate > existing.lastPriceUpdate)) {
+        existing.lastPriceUpdate = asset.lastPriceUpdate;
+      }
+      
+      // 確保使用有 symbol 的資產作為主要顯示
+      if (asset.symbol && !existing.symbol) {
+        existing.symbol = asset.symbol;
+      }
+    } else {
+      // 新股票
+      consolidated.set(key, {
+        ...asset,
+        holdings: [asset] // 保存原始持股記錄
+      });
+    }
+  });
+  
+  return Array.from(consolidated.values());
+}
 
 /**
  * 計算資產和負債的詳細占比資訊
@@ -270,7 +362,6 @@ function calculateEstimatedMonthlyRate(sorted, latest, latestDate) {
  * @param {number} rate USD/TWD 匯率
  * @returns {{
  *   investmentAssets: Array<{name: string, amount: number, percentage: number, details: string}>,
- *   liquidAssets: Array<{name: string, amount: number, percentage: number, details: string}>,
  *   liabilityItems: Array<{name: string, amount: number, percentage: number, details: string}>,
  *   totals: ReturnType<typeof calculateTotals>
  * }}
@@ -279,38 +370,29 @@ export function calculateAssetBreakdown(assets, liabilities, rate) {
   const totals = calculateTotals(assets, liabilities, rate);
   const totalValue = totals.totalAssets + totals.totalLiabilities;
   
-  // 計算投資資產明細
-  const investmentAssets = assets
-    .filter(a => a.category === 'investment')
+  // 先整合相同股票
+  const consolidatedAssets = consolidateAssets(assets, rate);
+  
+  // 計算整合後的資產明細
+  const investmentAssets = consolidatedAssets
     .map(asset => {
       const amount = calculateAssetTWD(asset, rate);
       const percentage = totalValue > 0 ? (amount / totalValue) * 100 : 0;
       const details = `${asset.quantity} × ${asset.pricePerUnit} ${asset.currency}`;
+      
+      // 顯示股票代號和名稱 - 股票代號在最前面
+      const displayName = asset.symbol 
+        ? `${asset.symbol} ${asset.name}`
+        : asset.name;
+      
       return {
-        name: asset.name || asset.symbol || '未命名資產',
+        name: displayName || '未命名資產',
         amount,
         percentage,
         details,
         symbol: asset.symbol,
-        type: asset.type
-      };
-    })
-    .sort((a, b) => b.amount - a.amount);
-
-  // 計算流動資產明細
-  const liquidAssets = assets
-    .filter(a => a.category === 'liquid')
-    .map(asset => {
-      const amount = calculateAssetTWD(asset, rate);
-      const percentage = totalValue > 0 ? (amount / totalValue) * 100 : 0;
-      const details = `${asset.quantity} × ${asset.pricePerUnit} ${asset.currency}`;
-      return {
-        name: asset.name || asset.symbol || '未命名資產',
-        amount,
-        percentage,
-        details,
-        symbol: asset.symbol,
-        type: asset.type
+        type: asset.type,
+        isMultiple: asset.holdings && asset.holdings.length > 1
       };
     })
     .sort((a, b) => b.amount - a.amount);
@@ -333,7 +415,6 @@ export function calculateAssetBreakdown(assets, liabilities, rate) {
 
   return {
     investmentAssets,
-    liquidAssets,
     liabilityItems,
     totals
   };
