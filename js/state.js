@@ -130,9 +130,30 @@ export function updateAsset(id, changes) {
   );
   AppState = { ...AppState, assets: newAssets };
   saveAssets(AppState.assets);
+  
+  // 如果是價格更新，立即創建快照
+  if ('pricePerUnit' in changes) {
+    const newSnapshots = autoSnapshot(AppState.assets, AppState.liabilities, AppState.exchangeRate, AppState.snapshots);
+    AppState = { ...AppState, snapshots: newSnapshots };
+    saveSnapshots(AppState.snapshots);
+  }
+  
+  notify();
+}
+
+/**
+ * 批量更新資產（用於價格更新）
+ * @param {import('./types.js').Asset[]} newAssets
+ */
+export function updateAssets(newAssets) {
+  AppState = { ...AppState, assets: newAssets };
+  saveAssets(AppState.assets);
+  
+  // 價格更新後立即創建快照
   const newSnapshots = autoSnapshot(AppState.assets, AppState.liabilities, AppState.exchangeRate, AppState.snapshots);
   AppState = { ...AppState, snapshots: newSnapshots };
   saveSnapshots(AppState.snapshots);
+  
   notify();
 }
 

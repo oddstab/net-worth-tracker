@@ -16,6 +16,9 @@
 
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  
+  <!-- Google APIs -->
+  <script src="https://apis.google.com/js/api.js" defer></script>
 </head>
 <body>
   <!-- Top Navigation Bar -->
@@ -95,7 +98,7 @@
             <canvas id="pie-chart" aria-label="資產配置圓餅圖" role="img"></canvas>
             <div class="pie-chart-center" id="pie-chart-center">
               <span class="pie-net-worth-label">淨資產</span>
-              <span class="pie-net-worth-value" id="pie-net-worth">--</span>
+              <div class="pie-net-worth-value" id="pie-net-worth">--</div>
             </div>
           </div>
           <div class="pie-legend" id="pie-legend" aria-label="圓餅圖圖例">

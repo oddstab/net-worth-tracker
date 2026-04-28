@@ -37,24 +37,35 @@ function renderAssetCategory(label, assets, subtotal) {
     const twd        = calculateAssetTWD(asset, rate);
     const symbolHtml = asset.symbol ? '<span class="asset-symbol">' + esc(asset.symbol) + '</span>' : '';
     const lastUpdate = formatLastUpdate(asset.lastPriceUpdate);
+    const priceDisplay = asset.pricePerUnit.toLocaleString('zh-TW') + ' ' + asset.currency;
 
     return '<div class="asset-item" data-id="' + esc(asset.id) + '">'
       + '<div class="asset-item-info">'
+      + '<div class="asset-item-header">'
       + '<div class="asset-item-name">'
       + '<span class="asset-name">' + esc(asset.name) + '</span>'
       + symbolHtml
       + '</div>'
-      + '<div class="asset-item-details">'
-      + '<span class="asset-quantity">數量：' + asset.quantity.toLocaleString('zh-TW') + '</span>'
-      + '<span class="asset-twd-value">' + formatTWD(twd) + '</span>'
+      + '<div class="asset-item-value">' + formatTWD(twd) + '</div>'
       + '</div>'
-      + '<div class="asset-item-update">'
-      + '<span class="asset-last-update">更新：' + esc(lastUpdate) + '</span>'
+      + '<div class="asset-item-details">'
+      + '<div class="asset-detail-row">'
+      + '<span class="asset-label">數量:</span>'
+      + '<span class="asset-value">' + asset.quantity.toLocaleString('zh-TW') + '</span>'
+      + '</div>'
+      + '<div class="asset-detail-row">'
+      + '<span class="asset-label">單價:</span>'
+      + '<span class="asset-value">' + priceDisplay + '</span>'
+      + '</div>'
+      + '<div class="asset-detail-row">'
+      + '<span class="asset-label">更新:</span>'
+      + '<span class="asset-value">' + esc(lastUpdate) + '</span>'
+      + '</div>'
       + '</div>'
       + '</div>'
       + '<div class="asset-item-actions">'
-      + '<button class="btn-icon btn-edit" data-action="edit-asset" data-id="' + esc(asset.id) + '" aria-label="編輯 ' + esc(asset.name) + '">編輯</button>'
-      + '<button class="btn-icon btn-delete" data-action="delete-asset" data-id="' + esc(asset.id) + '" aria-label="刪除 ' + esc(asset.name) + '">刪除</button>'
+      + '<button class="btn-icon btn-edit" data-action="edit-asset" data-id="' + esc(asset.id) + '" aria-label="編輯 ' + esc(asset.name) + '">✏️</button>'
+      + '<button class="btn-icon btn-delete" data-action="delete-asset" data-id="' + esc(asset.id) + '" aria-label="刪除 ' + esc(asset.name) + '">🗑️</button>'
       + '</div>'
       + '</div>';
   }).join('');
@@ -83,17 +94,26 @@ function renderLiabilityCategory(label, liabilities, subtotal) {
 
   const items = liabilities.map(l => {
     const twd = toTWD(l, rate);
+    const amountDisplay = l.amount.toLocaleString('zh-TW') + ' ' + l.currency;
+    
     return '<div class="liability-item" data-id="' + esc(l.id) + '">'
       + '<div class="liability-item-info">'
-      + '<div class="liability-item-name"><span class="liability-name">' + esc(l.name) + '</span></div>'
+      + '<div class="liability-item-header">'
+      + '<div class="liability-item-name">'
+      + '<span class="liability-name">' + esc(l.name) + '</span>'
+      + '</div>'
+      + '<div class="liability-item-value">' + formatTWD(twd) + '</div>'
+      + '</div>'
       + '<div class="liability-item-details">'
-      + '<span class="liability-amount">' + esc(l.currency) + ' ' + l.amount.toLocaleString('zh-TW') + '</span>'
-      + '<span class="liability-twd-value">' + formatTWD(twd) + '</span>'
+      + '<div class="liability-detail-row">'
+      + '<span class="liability-label">金額:</span>'
+      + '<span class="liability-value">' + amountDisplay + '</span>'
+      + '</div>'
       + '</div>'
       + '</div>'
       + '<div class="liability-item-actions">'
-      + '<button class="btn-icon btn-edit" data-action="edit-liability" data-id="' + esc(l.id) + '" aria-label="編輯 ' + esc(l.name) + '">編輯</button>'
-      + '<button class="btn-icon btn-delete" data-action="delete-liability" data-id="' + esc(l.id) + '" aria-label="刪除 ' + esc(l.name) + '">刪除</button>'
+      + '<button class="btn-icon btn-edit" data-action="edit-liability" data-id="' + esc(l.id) + '" aria-label="編輯 ' + esc(l.name) + '">✏️</button>'
+      + '<button class="btn-icon btn-delete" data-action="delete-liability" data-id="' + esc(l.id) + '" aria-label="刪除 ' + esc(l.name) + '">🗑️</button>'
       + '</div>'
       + '</div>';
   }).join('');

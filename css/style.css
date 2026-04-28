@@ -1450,3 +1450,584 @@ body {
   position: static; /* 覆蓋原本的 fixed，由 container 定位 */
   flex-shrink: 0;
 }
+
+/* ============================================================
+   Google 整合樣式
+   ============================================================ */
+
+/* Google 設置幫助區塊 */
+.google-setup-help {
+  background-color: var(--bg-tertiary);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+}
+
+.google-setup-help h4 {
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+  font-size: var(--font-size-base);
+}
+
+.google-setup-help ol {
+  margin-left: var(--spacing-md);
+  color: var(--text-secondary);
+}
+
+.google-setup-help ul {
+  margin-left: var(--spacing-md);
+  margin-top: var(--spacing-xs);
+}
+
+.google-setup-help a {
+  color: var(--accent-color);
+  text-decoration: none;
+}
+
+.google-setup-help a:hover {
+  text-decoration: underline;
+}
+
+/* Google 用戶信息 */
+.google-user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background-color: var(--bg-tertiary);
+  border-radius: var(--border-radius-md);
+  margin-bottom: var(--spacing-md);
+}
+
+.google-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+}
+
+.google-user-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.google-user-name {
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.google-user-email {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Google 操作按鈕組 */
+.google-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.google-actions .btn {
+  flex: 1;
+  min-width: 140px;
+}
+
+/* Google Sheets 連結 */
+.google-sheet-link {
+  text-align: center;
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+.google-sheet-link .btn {
+  width: 100%;
+}
+
+/* Google 狀態指示 */
+.google-status {
+  text-align: center;
+}
+
+.google-status p {
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+  line-height: 1.5;
+}
+
+/* 響應式調整 */
+@media (max-width: 767px) {
+  .google-actions {
+    flex-direction: column;
+  }
+  
+  .google-actions .btn {
+    width: 100%;
+  }
+  
+  .google-user-info {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-sm);
+  }
+}
+
+/* ── Pie Chart Legend ── */
+.pie-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  min-width: 300px;
+}
+
+.legend-category {
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-md);
+  border: 1px solid var(--border-color);
+}
+
+.legend-category-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.legend-category-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.legend-category-total {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.legend-item-detail {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius-sm);
+  font-size: 13px;
+}
+
+.legend-item-name {
+  flex: 1;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.legend-item-amount {
+  color: var(--text-secondary);
+  min-width: 80px;
+  text-align: right;
+}
+
+.legend-item-percent {
+  color: var(--text-muted);
+  min-width: 40px;
+  text-align: right;
+  font-size: 12px;
+}
+/* ── Additional Button Styles ── */
+.btn-info {
+  background: var(--color-info);
+  color: white;
+}
+
+.btn-info:hover {
+  background: #4f94d4;
+}
+
+.btn-warning {
+  background: var(--color-warning);
+  color: var(--text-inverse);
+}
+
+.btn-warning:hover {
+  background: #e6a800;
+}
+
+.btn-success {
+  background: var(--color-positive);
+  color: var(--text-inverse);
+}
+
+.btn-success:hover {
+  background: #38a169;
+}
+/* ── Asset Breakdown Section ── */
+.breakdown-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.breakdown-category {
+  background: var(--bg-card);
+  border-radius: var(--border-radius-md);
+  padding: var(--spacing-lg);
+  border: 1px solid var(--border-color);
+}
+
+.breakdown-category-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-md);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.breakdown-category-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.breakdown-category-icon.investment {
+  background: var(--chart-investment);
+}
+
+.breakdown-category-icon.liquid {
+  background: var(--chart-liquid);
+}
+
+.breakdown-category-icon.debt {
+  background: var(--chart-debt);
+}
+
+.breakdown-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.breakdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.breakdown-item:hover {
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+}
+
+.breakdown-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.breakdown-item-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.breakdown-item-details {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.breakdown-item-values {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.breakdown-item-amount {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.breakdown-item-percentage {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.breakdown-category-total {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.breakdown-category-total-percentage {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* Responsive design for breakdown */
+@media (min-width: 768px) {
+  .breakdown-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+  }
+  
+  .breakdown-category.debt-category {
+    grid-column: 1 / -1;
+  }
+}
+/* ── Asset List Improvements ── */
+.asset-category, .liability-category {
+  margin-bottom: var(--spacing-xl);
+}
+
+.category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-md) var(--spacing-lg);
+  background: var(--bg-card);
+  border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+  border: 1px solid var(--border-color);
+  border-bottom: none;
+}
+
+.category-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.category-subtotal {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent-color);
+}
+
+.category-items {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 0 0 var(--border-radius-md) var(--border-radius-md);
+}
+
+/* Asset Item Styles */
+.asset-item, .liability-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  transition: all 0.2s ease;
+}
+
+.asset-item:last-child, .liability-item:last-child {
+  border-bottom: none;
+}
+
+.asset-item:hover, .liability-item:hover {
+  background: var(--bg-hover);
+}
+
+.asset-item-info, .liability-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.asset-item-header, .liability-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.asset-item-name, .liability-item-name {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.asset-name, .liability-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 16px;
+}
+
+.asset-symbol {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.asset-item-value, .liability-item-value {
+  font-weight: 600;
+  color: var(--accent-color);
+  font-size: 16px;
+}
+
+.asset-item-details, .liability-item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.asset-detail-row, .liability-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.asset-label, .liability-label {
+  color: var(--text-secondary);
+  font-size: 13px;
+  min-width: 40px;
+}
+
+.asset-value, .liability-value {
+  color: var(--text-primary);
+  font-size: 13px;
+  text-align: right;
+}
+
+.asset-item-actions, .liability-item-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-left: var(--spacing-md);
+}
+
+.btn-icon {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  min-width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-icon:hover {
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+}
+
+.btn-edit:hover {
+  background: var(--color-info);
+  color: white;
+  border-color: var(--color-info);
+}
+
+.btn-delete:hover {
+  background: var(--color-negative);
+  color: white;
+  border-color: var(--color-negative);
+}
+
+/* Responsive Design for Asset List */
+@media (max-width: 768px) {
+  .asset-item, .liability-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-md);
+  }
+  
+  .asset-item-actions, .liability-item-actions {
+    margin-left: 0;
+    justify-content: center;
+  }
+  
+  .asset-item-header, .liability-item-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-xs);
+  }
+  
+  .asset-item-value, .liability-item-value {
+    text-align: left;
+  }
+}
+/* ── Pie Chart Center Improvements ── */
+.pie-net-worth-value {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.net-worth-amount {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.net-worth-daily {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 8px;
+  line-height: 1;
+}
+
+.net-worth-daily.positive {
+  color: var(--color-positive);
+  background: rgba(74, 222, 128, 0.1);
+}
+
+.net-worth-daily.negative {
+  color: var(--color-negative);
+  background: rgba(248, 113, 113, 0.1);
+}
+
+/* Estimated rate indicator */
+.stat-value[title] {
+  position: relative;
+}
+
+.stat-value[title]:after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 6px;
+  height: 6px;
+  background: var(--color-warning);
+  border-radius: 50%;
+  opacity: 0.7;
+}

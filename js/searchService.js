@@ -41,21 +41,26 @@ const ETF_META = {
 // ─── 全市場快取 ───────────────────────────────────────────────────────────────
 let stockDayAllCache = null;
 let stockDayAllFetchedAt = 0;
-const CACHE_TTL_MS = 10 * 60 * 1000;
+const CACHE_TTL_MS = 1 * 60 * 1000; // 改為1分鐘緩存，更頻繁更新
 
 const STOCK_DAY_ALL_URL = 'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL';
 
-async function loadStockDayAll() {
+async function loadStockDayAll(forceRefresh = false) {
   const now = Date.now();
-  if (stockDayAllCache && now - stockDayAllFetchedAt < CACHE_TTL_MS) {
+  if (!forceRefresh && stockDayAllCache && now - stockDayAllFetchedAt < CACHE_TTL_MS) {
+    console.log('[SearchService] 使用快取的股價資料');
     return stockDayAllCache;
   }
 
+  console.log('[SearchService] 重新載入股價資料...', forceRefresh ? '(強制刷新)' : '');
   const res = await fetchWithFallback([
     STOCK_DAY_ALL_URL,
     proxied(STOCK_DAY_ALL_URL),
   ]);
-  if (!res) return null;
+  if (!res) {
+    console.warn('[SearchService] 無法載入股價資料');
+    return stockDayAllCache; // 返回舊快取而不是null
+  }
 
   try {
     const json = await res.json();
@@ -81,10 +86,12 @@ async function loadStockDayAll() {
     if (map.size > 0) {
       stockDayAllCache = map;
       stockDayAllFetchedAt = now;
+      console.log(`[SearchService] 成功載入 ${map.size} 筆股價資料，日期: ${json[0]?.Date}`);
     }
-    return map.size > 0 ? map : null;
-  } catch {
-    return null;
+    return map.size > 0 ? map : stockDayAllCache;
+  } catch (error) {
+    console.error('[SearchService] 解析股價資料失敗:', error);
+    return stockDayAllCache; // 返回舊快取而不是null
   }
 }
 
@@ -146,12 +153,18 @@ export async function getTWStockDetail(symbol) {
   const sym     = symbol.toUpperCase();
   const etfMeta = ETF_META[sym] || null;
 
-  // 1. 嘗試即時 API（盤中）
-  const realtime = await fetchRealtimeDetail(symbol, etfMeta);
-  if (realtime) return realtime;
+  console.log(`[SearchService] 獲取 ${symbol} 的詳細資訊...`);
 
-  // 2. 非開盤時間 → 用 STOCK_DAY_ALL 最後收盤
-  const cache = await loadStockDayAll();
+  // 1. 優先嘗試即時 API（盤中和盤後都嘗試）
+  const realtime = await fetchRealtimeDetail(symbol, etfMeta);
+  if (realtime) {
+    console.log(`[SearchService] ${symbol} 使用即時價格: ${realtime.price}`);
+    return realtime;
+  }
+
+  // 2. 使用 STOCK_DAY_ALL 最後收盤價（強制刷新）
+  console.log(`[SearchService] ${symbol} 即時API無資料，使用每日收盤價`);
+  const cache = await loadStockDayAll(true); // 強制刷新
   if (cache) {
     const item = cache.get(sym);
     if (item && item.close !== null) {
@@ -159,6 +172,8 @@ export async function getTWStockDetail(symbol) {
       const changePercent = item.change !== null && prevClose !== 0
         ? (item.change / prevClose) * 100 : null;
       const yearsListed = etfMeta?.listedDate ? calcYearsListed(etfMeta.listedDate) : null;
+      
+      console.log(`[SearchService] ${symbol} 使用收盤價: ${item.close} (日期: ${item.date})`);
       return {
         symbol: item.code, name: item.name,
         price: item.close, isHistorical: true, priceDate: item.date,
@@ -170,6 +185,7 @@ export async function getTWStockDetail(symbol) {
     }
   }
 
+  console.warn(`[SearchService] ${symbol} 無法獲取任何價格資料`);
   return null;
 }
 
@@ -373,4 +389,36 @@ export async function preloadStockCache() {
     loadStockDayAll(),
     loadCompanyInfo(),
   ]);
+}
+
+/**
+ * 清除股價快取，強制重新載入
+ */
+export function clearStockCache() {
+  console.log('[SearchService] 清除股價快取');
+  stockDayAllCache = null;
+  stockDayAllFetchedAt = 0;
+  companyInfoCache = null;
+  companyInfoFetchedAt = 0;
+}
+
+/**
+ * 獲取快取狀態資訊
+ */
+export function getCacheStatus() {
+  const now = Date.now();
+  return {
+    stockCache: {
+      exists: !!stockDayAllCache,
+      size: stockDayAllCache?.size || 0,
+      age: stockDayAllCache ? Math.floor((now - stockDayAllFetchedAt) / 1000) : 0,
+      ttl: Math.floor(CACHE_TTL_MS / 1000),
+    },
+    companyCache: {
+      exists: !!companyInfoCache,
+      size: companyInfoCache?.size || 0,
+      age: companyInfoCache ? Math.floor((now - companyInfoFetchedAt) / 1000) : 0,
+      ttl: Math.floor(COMPANY_CACHE_TTL / 1000),
+    }
+  };
 }

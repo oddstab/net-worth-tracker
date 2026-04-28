@@ -110,19 +110,62 @@ export function calculateTotals(assets, liabilities, rate) {
 // ─── 月增率 ──────────────────────────────────────────────────────────────────
 
 /**
- * 計算資產月增率（%）。
+ * 計算資產月增率（%）和今日漲跌幅（%）。
  *
  * 演算法：
+ *   月增率：
  *   1. 找出本月最新快照（日期最大者）
  *   2. 找出上月同日（±3 天容差）快照
  *   3. 公式：(本月淨資產 - 上月淨資產) / |上月淨資產| × 100
  *
- * 若無足夠快照資料或上月淨資產為 0，回傳 null。
+ *   今日漲跌幅：
+ *   1. 找出今日最新快照
+ *   2. 找出昨日快照（±1 天容差）
+ *   3. 如果沒有足夠歷史資料，用可用天數按比例計算月增率
  *
  * @param {import('./types.js').Snapshot[]} snapshots
- * @returns {number | null}
+ * @returns {{
+ *   monthlyGrowthRate: number | null,
+ *   dailyGrowthRate: number | null,
+ *   estimatedMonthlyRate: number | null
+ * }}
  */
-export function calculateMonthlyGrowthRate(snapshots) {
+export function calculateGrowthRates(snapshots) {
+  if (!snapshots || snapshots.length < 2) {
+    return {
+      monthlyGrowthRate: null,
+      dailyGrowthRate: null,
+      estimatedMonthlyRate: null
+    };
+  }
+
+  // 依日期排序（最新在前）
+  const sorted = [...snapshots].sort((a, b) => b.date.localeCompare(a.date));
+
+  // 今日最新快照
+  const latest = sorted[0];
+  const latestDate = new Date(latest.date);
+
+  // 計算今日漲跌幅
+  const dailyGrowthRate = calculateDailyGrowthRate(sorted, latest, latestDate);
+
+  // 計算真實月增率
+  const monthlyGrowthRate = calculateRealMonthlyGrowthRate(snapshots);
+
+  // 計算估算月增率（基於可用天數）
+  const estimatedMonthlyRate = calculateEstimatedMonthlyRate(sorted, latest, latestDate);
+
+  return {
+    monthlyGrowthRate,
+    dailyGrowthRate,
+    estimatedMonthlyRate
+  };
+}
+
+/**
+ * 計算真實月增率（原邏輯）
+ */
+function calculateRealMonthlyGrowthRate(snapshots) {
   if (!snapshots || snapshots.length < 2) return null;
 
   // 依日期排序（最新在前）
@@ -157,38 +200,143 @@ export function calculateMonthlyGrowthRate(snapshots) {
   return ((latest.netWorth - bestSnapshot.netWorth) / Math.abs(bestSnapshot.netWorth)) * 100;
 }
 
+/**
+ * 計算今日漲跌幅
+ */
+function calculateDailyGrowthRate(sorted, latest, latestDate) {
+  if (sorted.length < 2) return null;
+  
+  // 尋找昨日快照（±3天容差，更寬鬆）
+  const yesterdayTarget = new Date(latestDate);
+  yesterdayTarget.setDate(yesterdayTarget.getDate() - 1);
+  
+  const DAILY_TOLERANCE_MS = 3 * 24 * 60 * 60 * 1000; // 3天容差
+  
+  let bestSnapshot = null;
+  let bestDiff = Infinity;
+  
+  for (const snapshot of sorted) {
+    if (snapshot === latest) continue; // 跳過今日
+    
+    const snapshotDate = new Date(snapshot.date);
+    const diff = Math.abs(snapshotDate.getTime() - yesterdayTarget.getTime());
+    
+    if (diff <= DAILY_TOLERANCE_MS && diff < bestDiff) {
+      bestDiff = diff;
+      bestSnapshot = snapshot;
+    }
+  }
+  
+  // 如果沒找到昨日附近的資料，使用最近的一個快照
+  if (!bestSnapshot && sorted.length >= 2) {
+    bestSnapshot = sorted[1]; // 使用第二新的快照
+  }
+  
+  if (!bestSnapshot || bestSnapshot.netWorth === 0) return null;
+  
+  return ((latest.netWorth - bestSnapshot.netWorth) / Math.abs(bestSnapshot.netWorth)) * 100;
+}
+
+/**
+ * 計算估算月增率（基於可用天數按比例推算）
+ */
+function calculateEstimatedMonthlyRate(sorted, latest, latestDate) {
+  if (sorted.length < 2) return null;
+  
+  // 找到最早的快照
+  const earliest = sorted[sorted.length - 1];
+  const earliestDate = new Date(earliest.date);
+  
+  // 計算實際天數
+  const daysDiff = Math.floor((latestDate.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (daysDiff <= 0 || earliest.netWorth === 0) return null;
+  
+  // 計算期間增率
+  const periodGrowthRate = ((latest.netWorth - earliest.netWorth) / Math.abs(earliest.netWorth)) * 100;
+  
+  // 按比例推算30天增率
+  const estimatedMonthlyRate = (periodGrowthRate / daysDiff) * 30;
+  
+  return estimatedMonthlyRate;
+}
+
 // ─── 圓餅圖資料 ──────────────────────────────────────────────────────────────
 
 /**
- * 計算圓餅圖所需的標籤、金額與百分比。
- *
- * 若所有值為 0，percentages 全為 0。
- *
- * @param {{
- *   investmentTotal: number,
- *   liquidTotal: number,
- *   totalLiabilities: number
- * }} totals
+ * 計算資產和負債的詳細占比資訊
+ * @param {import('./types.js').Asset[]} assets
+ * @param {import('./types.js').Liability[]} liabilities
+ * @param {number} rate USD/TWD 匯率
  * @returns {{
- *   labels: string[],
- *   values: number[],
- *   percentages: number[]
+ *   investmentAssets: Array<{name: string, amount: number, percentage: number, details: string}>,
+ *   liquidAssets: Array<{name: string, amount: number, percentage: number, details: string}>,
+ *   liabilityItems: Array<{name: string, amount: number, percentage: number, details: string}>,
+ *   totals: ReturnType<typeof calculateTotals>
  * }}
  */
-export function calculatePieChartData(totals) {
-  const labels = ['投資資產', '流動資產', '債務'];
-  const values = [totals.investmentTotal, totals.liquidTotal, totals.totalLiabilities];
+export function calculateAssetBreakdown(assets, liabilities, rate) {
+  const totals = calculateTotals(assets, liabilities, rate);
+  const totalValue = totals.totalAssets + totals.totalLiabilities;
+  
+  // 計算投資資產明細
+  const investmentAssets = assets
+    .filter(a => a.category === 'investment')
+    .map(asset => {
+      const amount = calculateAssetTWD(asset, rate);
+      const percentage = totalValue > 0 ? (amount / totalValue) * 100 : 0;
+      const details = `${asset.quantity} × ${asset.pricePerUnit} ${asset.currency}`;
+      return {
+        name: asset.name || asset.symbol || '未命名資產',
+        amount,
+        percentage,
+        details,
+        symbol: asset.symbol,
+        type: asset.type
+      };
+    })
+    .sort((a, b) => b.amount - a.amount);
 
-  const total = values.reduce((sum, v) => sum + v, 0);
+  // 計算流動資產明細
+  const liquidAssets = assets
+    .filter(a => a.category === 'liquid')
+    .map(asset => {
+      const amount = calculateAssetTWD(asset, rate);
+      const percentage = totalValue > 0 ? (amount / totalValue) * 100 : 0;
+      const details = `${asset.quantity} × ${asset.pricePerUnit} ${asset.currency}`;
+      return {
+        name: asset.name || asset.symbol || '未命名資產',
+        amount,
+        percentage,
+        details,
+        symbol: asset.symbol,
+        type: asset.type
+      };
+    })
+    .sort((a, b) => b.amount - a.amount);
 
-  let percentages;
-  if (total === 0) {
-    percentages = [0, 0, 0];
-  } else {
-    percentages = values.map(v => (v / total) * 100);
-  }
+  // 計算負債明細
+  const liabilityItems = liabilities
+    .map(liability => {
+      const amount = toTWD(liability, rate);
+      const percentage = totalValue > 0 ? (amount / totalValue) * 100 : 0;
+      const details = `${liability.amount} ${liability.currency}`;
+      return {
+        name: liability.name || '未命名負債',
+        amount,
+        percentage,
+        details,
+        category: liability.category
+      };
+    })
+    .sort((a, b) => b.amount - a.amount);
 
-  return { labels, values, percentages };
+  return {
+    investmentAssets,
+    liquidAssets,
+    liabilityItems,
+    totals
+  };
 }
 
 // ─── 輸入驗證 ────────────────────────────────────────────────────────────────
@@ -227,4 +375,89 @@ export function validateAmount(x) {
  */
 export function validateExchangeRate(x) {
   return typeof x === 'number' && isFinite(x) && x > 0;
+}
+/**
+ * 計算圓餅圖所需的標籤、金額與百分比。
+ *
+ * 若所有值為 0，percentages 全為 0。
+ *
+ * @param {{
+ *   investmentTotal: number,
+ *   liquidTotal: number,
+ *   totalLiabilities: number
+ * }} totals
+ * @returns {{
+ *   labels: string[],
+ *   values: number[],
+ *   percentages: number[]
+ * }}
+ */
+export function calculatePieChartData(totals) {
+  const labels = ['投資資產', '流動資產', '債務'];
+  const values = [totals.investmentTotal, totals.liquidTotal, totals.totalLiabilities];
+
+  const total = values.reduce((sum, v) => sum + v, 0);
+
+  let percentages;
+  if (total === 0) {
+    percentages = [0, 0, 0];
+  } else {
+    percentages = values.map(v => (v / total) * 100);
+  }
+
+  return { labels, values, percentages };
+}
+/**
+ * 計算資產月增率（%）- 向後兼容版本
+ * 直接計算，避免循環調用
+ *
+ * @param {import('./types.js').Snapshot[]} snapshots
+ * @returns {number | null}
+ */
+export function calculateMonthlyGrowthRate(snapshots) {
+  if (!snapshots || snapshots.length < 2) return null;
+
+  // 依日期排序（最新在前）
+  const sorted = [...snapshots].sort((a, b) => b.date.localeCompare(a.date));
+
+  // 本月最新快照
+  const latest = sorted[0];
+  const latestDate = new Date(latest.date);
+
+  // 嘗試計算真實月增率
+  const targetDate = new Date(latestDate);
+  targetDate.setMonth(targetDate.getMonth() - 1);
+
+  const TOLERANCE_MS = 3 * 24 * 60 * 60 * 1000; // 3 天（毫秒）
+
+  let bestSnapshot = null;
+  let bestDiff = Infinity;
+
+  for (const snapshot of snapshots) {
+    const snapshotDate = new Date(snapshot.date);
+    const diff = Math.abs(snapshotDate.getTime() - targetDate.getTime());
+    if (diff <= TOLERANCE_MS && diff < bestDiff) {
+      bestDiff = diff;
+      bestSnapshot = snapshot;
+    }
+  }
+
+  // 如果找到上月資料，計算真實月增率
+  if (bestSnapshot && bestSnapshot.netWorth !== 0) {
+    return ((latest.netWorth - bestSnapshot.netWorth) / Math.abs(bestSnapshot.netWorth)) * 100;
+  }
+
+  // 否則計算估算月增率
+  if (sorted.length < 2) return null;
+  
+  const earliest = sorted[sorted.length - 1];
+  const earliestDate = new Date(earliest.date);
+  
+  const daysDiff = Math.floor((latestDate.getTime() - earliestDate.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (daysDiff <= 0 || earliest.netWorth === 0) return null;
+  
+  const periodGrowthRate = ((latest.netWorth - earliest.netWorth) / Math.abs(earliest.netWorth)) * 100;
+  
+  return (periodGrowthRate / daysDiff) * 30;
 }

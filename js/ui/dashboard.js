@@ -11,8 +11,9 @@
 import * as state from '../state.js';
 import {
   calculateTotals,
-  calculateMonthlyGrowthRate,
+  calculateGrowthRates,
   calculatePieChartData,
+  calculateAssetBreakdown,
 } from '../calculator.js';
 
 // ─── 常數 ────────────────────────────────────────────────────────────────────
@@ -46,19 +47,30 @@ let pieChartInstance = null;
 export function renderQuickStats(currentState) {
   const { assets, liabilities, exchangeRate, snapshots } = currentState;
   const totals = calculateTotals(assets, liabilities, exchangeRate);
+  const growthRates = calculateGrowthRates(snapshots);
 
   // ── 資產月增率 ──
   const growthEl = document.getElementById('stat-monthly-growth');
   if (growthEl) {
-    const growthRate = calculateMonthlyGrowthRate(snapshots);
-    if (growthRate === null) {
+    // 優先顯示真實月增率，其次顯示估算月增率
+    const displayRate = growthRates.monthlyGrowthRate || growthRates.estimatedMonthlyRate;
+    
+    if (displayRate === null) {
       growthEl.textContent = '--';
       growthEl.classList.remove('positive', 'negative');
     } else {
-      const formatted = growthRate.toFixed(2);
-      growthEl.textContent = (growthRate >= 0 ? '+' : '') + formatted + '%';
-      growthEl.classList.toggle('positive', growthRate >= 0);
-      growthEl.classList.toggle('negative', growthRate < 0);
+      const formatted = displayRate.toFixed(2);
+      const isEstimated = growthRates.monthlyGrowthRate === null && growthRates.estimatedMonthlyRate !== null;
+      growthEl.textContent = (displayRate >= 0 ? '+' : '') + formatted + '%' + (isEstimated ? '*' : '');
+      growthEl.classList.toggle('positive', displayRate >= 0);
+      growthEl.classList.toggle('negative', displayRate < 0);
+      
+      // 添加估算標記的提示
+      if (isEstimated) {
+        growthEl.title = '基於現有資料估算的月增率';
+      } else {
+        growthEl.title = '';
+      }
     }
   }
 
@@ -90,6 +102,7 @@ export function renderPieChart(currentState) {
   const { assets, liabilities, exchangeRate } = currentState;
   const totals = calculateTotals(assets, liabilities, exchangeRate);
   const pieData = calculatePieChartData(totals);
+  const breakdown = calculateAssetBreakdown(assets, liabilities, exchangeRate);
 
   const canvasEl = document.getElementById('pie-chart');
   const noDataEl = document.getElementById('pie-no-data');
@@ -119,24 +132,99 @@ export function renderPieChart(currentState) {
 
   // 更新中央淨資產
   if (netWorthEl) {
-    netWorthEl.textContent = formatNTD(totals.netWorth);
+    const growthRates = calculateGrowthRates(currentState.snapshots);
+    const dailyRate = growthRates.dailyGrowthRate;
+    
+    console.log('[Dashboard] 成長率資料:', {
+      snapshots: currentState.snapshots.length,
+      dailyRate,
+      monthlyRate: growthRates.monthlyGrowthRate,
+      estimatedRate: growthRates.estimatedMonthlyRate
+    });
+    
+    let dailyText = '';
+    if (dailyRate !== null) {
+      const sign = dailyRate >= 0 ? '+' : '';
+      dailyText = `今日${sign}${dailyRate.toFixed(2)}%`;
+    }
+    
+    netWorthEl.innerHTML = `
+      <div class="net-worth-amount">${formatNTD(totals.netWorth)}</div>
+      ${dailyText ? `<div class="net-worth-daily ${dailyRate >= 0 ? 'positive' : 'negative'}">${dailyText}</div>` : ''}
+    `;
   }
 
-  // 渲染圖例
+  // 渲染詳細圖例
   if (legendEl) {
-    legendEl.innerHTML = pieData.labels
-      .map((label, i) => {
-        const color = PIE_COLORS[i];
-        const amount = formatNTD(pieData.values[i]);
-        const percent = pieData.percentages[i].toFixed(1) + '%';
-        return `<div class="legend-item">
-  <span class="legend-dot" style="background-color: ${color};"></span>
-  <span class="legend-label">${label}</span>
-  <span class="legend-amount">${amount}</span>
-  <span class="legend-percent">${percent}</span>
-</div>`;
-      })
-      .join('');
+    let legendHtml = '';
+    
+    // 投資資產詳細列表
+    if (breakdown.investmentAssets.length > 0) {
+      legendHtml += `
+        <div class="legend-category">
+          <div class="legend-category-header">
+            <span class="legend-dot" style="background-color: ${PIE_COLORS[0]};"></span>
+            <span class="legend-category-title">投資資產</span>
+            <span class="legend-category-total">${formatNTD(totals.investmentTotal)} (${pieData.percentages[0].toFixed(1)}%)</span>
+          </div>
+          <div class="legend-items">
+            ${breakdown.investmentAssets.map(item => `
+              <div class="legend-item-detail">
+                <span class="legend-item-name">${item.name}</span>
+                <span class="legend-item-amount">${formatNTD(item.amount)}</span>
+                <span class="legend-item-percent">${item.percentage.toFixed(1)}%</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    // 流動資產詳細列表
+    if (breakdown.liquidAssets.length > 0) {
+      legendHtml += `
+        <div class="legend-category">
+          <div class="legend-category-header">
+            <span class="legend-dot" style="background-color: ${PIE_COLORS[1]};"></span>
+            <span class="legend-category-title">流動資產</span>
+            <span class="legend-category-total">${formatNTD(totals.liquidTotal)} (${pieData.percentages[1].toFixed(1)}%)</span>
+          </div>
+          <div class="legend-items">
+            ${breakdown.liquidAssets.map(item => `
+              <div class="legend-item-detail">
+                <span class="legend-item-name">${item.name}</span>
+                <span class="legend-item-amount">${formatNTD(item.amount)}</span>
+                <span class="legend-item-percent">${item.percentage.toFixed(1)}%</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    // 負債詳細列表
+    if (breakdown.liabilityItems.length > 0) {
+      legendHtml += `
+        <div class="legend-category">
+          <div class="legend-category-header">
+            <span class="legend-dot" style="background-color: ${PIE_COLORS[2]};"></span>
+            <span class="legend-category-title">債務</span>
+            <span class="legend-category-total">${formatNTD(totals.totalLiabilities)} (${pieData.percentages[2].toFixed(1)}%)</span>
+          </div>
+          <div class="legend-items">
+            ${breakdown.liabilityItems.map(item => `
+              <div class="legend-item-detail">
+                <span class="legend-item-name">${item.name}</span>
+                <span class="legend-item-amount">${formatNTD(item.amount)}</span>
+                <span class="legend-item-percent">${item.percentage.toFixed(1)}%</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+    
+    legendEl.innerHTML = legendHtml;
   }
 
   // 繪製圓餅圖
@@ -199,4 +287,162 @@ export function initDashboard() {
 
   // 執行初始渲染
   onStateChange(state.getState());
+}
+
+/**
+ * 更新最後更新時間顯示
+ * @param {ReturnType<typeof state.getState>} currentState
+ */
+function updateLastUpdateTime(currentState) {
+  // 移除此函數，不再顯示更新時間
+}
+/**
+ * 渲染資產負債明細
+ * @param {ReturnType<typeof state.getState>} currentState
+ */
+export function renderAssetBreakdown(currentState) {
+  const { assets, liabilities, exchangeRate } = currentState;
+  const breakdown = calculateAssetBreakdown(assets, liabilities, exchangeRate);
+  
+  const containerEl = document.getElementById('breakdown-container');
+  const noDataEl = document.getElementById('breakdown-no-data');
+  
+  if (!containerEl) return;
+  
+  const hasData = assets.length > 0 || liabilities.length > 0;
+  
+  if (!hasData) {
+    if (noDataEl) noDataEl.classList.remove('hidden');
+    containerEl.innerHTML = '';
+    return;
+  }
+  
+  if (noDataEl) noDataEl.classList.add('hidden');
+  
+  let html = '';
+  
+  // 投資資產區塊
+  if (breakdown.investmentAssets.length > 0) {
+    html += `
+      <div class="breakdown-category">
+        <div class="breakdown-category-title">
+          <div class="breakdown-category-icon investment"></div>
+          投資資產
+        </div>
+        <div class="breakdown-items">
+          ${breakdown.investmentAssets.map(item => `
+            <div class="breakdown-item">
+              <div class="breakdown-item-info">
+                <div class="breakdown-item-name">${item.name}</div>
+                <div class="breakdown-item-details">${item.details}</div>
+              </div>
+              <div class="breakdown-item-values">
+                <div class="breakdown-item-amount">${formatNTD(item.amount)}</div>
+                <div class="breakdown-item-percentage">${item.percentage.toFixed(1)}%</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="breakdown-category-total">
+          <span>投資資產總計</span>
+          <div>
+            <span>${formatNTD(breakdown.totals.investmentTotal)}</span>
+            <span class="breakdown-category-total-percentage">
+              (${(breakdown.totals.totalAssets + breakdown.totals.totalLiabilities) > 0 ? 
+                ((breakdown.totals.investmentTotal / (breakdown.totals.totalAssets + breakdown.totals.totalLiabilities)) * 100).toFixed(1) : '0.0'}%)
+            </span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // 流動資產區塊
+  if (breakdown.liquidAssets.length > 0) {
+    html += `
+      <div class="breakdown-category">
+        <div class="breakdown-category-title">
+          <div class="breakdown-category-icon liquid"></div>
+          流動資產
+        </div>
+        <div class="breakdown-items">
+          ${breakdown.liquidAssets.map(item => `
+            <div class="breakdown-item">
+              <div class="breakdown-item-info">
+                <div class="breakdown-item-name">${item.name}</div>
+                <div class="breakdown-item-details">${item.details}</div>
+              </div>
+              <div class="breakdown-item-values">
+                <div class="breakdown-item-amount">${formatNTD(item.amount)}</div>
+                <div class="breakdown-item-percentage">${item.percentage.toFixed(1)}%</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="breakdown-category-total">
+          <span>流動資產總計</span>
+          <div>
+            <span>${formatNTD(breakdown.totals.liquidTotal)}</span>
+            <span class="breakdown-category-total-percentage">
+              (${(breakdown.totals.totalAssets + breakdown.totals.totalLiabilities) > 0 ? 
+                ((breakdown.totals.liquidTotal / (breakdown.totals.totalAssets + breakdown.totals.totalLiabilities)) * 100).toFixed(1) : '0.0'}%)
+            </span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  // 負債區塊
+  if (breakdown.liabilityItems.length > 0) {
+    html += `
+      <div class="breakdown-category debt-category">
+        <div class="breakdown-category-title">
+          <div class="breakdown-category-icon debt"></div>
+          負債
+        </div>
+        <div class="breakdown-items">
+          ${breakdown.liabilityItems.map(item => `
+            <div class="breakdown-item">
+              <div class="breakdown-item-info">
+                <div class="breakdown-item-name">${item.name}</div>
+                <div class="breakdown-item-details">${item.details} (${getCategoryName(item.category)})</div>
+              </div>
+              <div class="breakdown-item-values">
+                <div class="breakdown-item-amount">${formatNTD(item.amount)}</div>
+                <div class="breakdown-item-percentage">${item.percentage.toFixed(1)}%</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="breakdown-category-total">
+          <span>負債總計</span>
+          <div>
+            <span>${formatNTD(breakdown.totals.totalLiabilities)}</span>
+            <span class="breakdown-category-total-percentage">
+              (${(breakdown.totals.totalAssets + breakdown.totals.totalLiabilities) > 0 ? 
+                ((breakdown.totals.totalLiabilities / (breakdown.totals.totalAssets + breakdown.totals.totalLiabilities)) * 100).toFixed(1) : '0.0'}%)
+            </span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  containerEl.innerHTML = html;
+}
+
+/**
+ * 獲取負債類別的中文名稱
+ * @param {string} category
+ * @returns {string}
+ */
+function getCategoryName(category) {
+  const categoryNames = {
+    'credit': '信用卡',
+    'pledge': '質押貸款',
+    'mortgage': '房貸',
+    'other': '其他'
+  };
+  return categoryNames[category] || category;
 }

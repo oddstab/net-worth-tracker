@@ -70,6 +70,37 @@ function render(currentState) {
       </div>
     </section>
 
+    <!-- 診斷工具 -->
+    <section class="settings-section">
+      <h2 class="settings-section-title">診斷工具</h2>
+      <div style="display: flex; flex-direction: column; gap: var(--spacing-md);">
+        <div>
+          <button class="btn btn-info" id="open-diagnostics" style="width: 100%;">
+            🔧 股價更新診斷
+          </button>
+          <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: var(--spacing-xs);">
+            檢查股價API連接狀況和更新問題
+          </p>
+        </div>
+        <div>
+          <button class="btn btn-warning" id="clear-cache" style="width: 100%;">
+            🗑️ 清除快取
+          </button>
+          <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: var(--spacing-xs);">
+            清除股價快取，強制重新載入最新資料
+          </p>
+        </div>
+        <div>
+          <button class="btn btn-success" id="manual-refresh" style="width: 100%;">
+            🔄 手動更新股價
+          </button>
+          <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: var(--spacing-xs);">
+            立即執行一次股價更新
+          </p>
+        </div>
+      </div>
+    </section>
+
     <!-- 關於 -->
     <section class="settings-section">
       <h2 class="settings-section-title">關於</h2>
@@ -100,6 +131,14 @@ function bindEvents() {
 
   // 檔案選擇後讀取
   document.getElementById('import-file-input').addEventListener('change', handleImportData);
+
+  // 診斷工具
+  document.getElementById('open-diagnostics').addEventListener('click', () => {
+    window.open('diagnostics.html', '_blank');
+  });
+
+  document.getElementById('clear-cache').addEventListener('click', handleClearCache);
+  document.getElementById('manual-refresh').addEventListener('click', handleManualRefresh);
 }
 
 // ─── 匯率儲存 ────────────────────────────────────────────────────────────────
@@ -196,6 +235,54 @@ function showToast(message, type = 'success') {
   setTimeout(() => {
     toast.classList.add('hidden');
   }, 2500);
+}
+
+// ─── 診斷工具 ────────────────────────────────────────────────────────────────
+
+/**
+ * 清除快取
+ */
+function handleClearCache() {
+  try {
+    // 清除股價快取
+    const event = new CustomEvent('clearStockCache');
+    window.dispatchEvent(event);
+    
+    showToast('快取已清除', 'success');
+  } catch (error) {
+    console.error('清除快取失敗:', error);
+    showToast('清除快取失敗', 'error');
+  }
+}
+
+/**
+ * 手動更新股價
+ */
+async function handleManualRefresh() {
+  const button = document.getElementById('manual-refresh');
+  const originalText = button.textContent;
+  
+  try {
+    // 設置載入狀態
+    button.disabled = true;
+    button.textContent = '🔄 更新中...';
+    
+    // 觸發手動價格更新
+    const event = new CustomEvent('manualPriceRefresh');
+    window.dispatchEvent(event);
+    
+    // 等待更新完成
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    
+    showToast('股價更新完成', 'success');
+  } catch (error) {
+    console.error('手動更新股價失敗:', error);
+    showToast('股價更新失敗', 'error');
+  } finally {
+    // 恢復按鈕狀態
+    button.disabled = false;
+    button.textContent = originalText;
+  }
 }
 
 // ─── 初始化 ──────────────────────────────────────────────────────────────────

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>修復測試</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Net Worth Tracker 修復測試</h1>
+    
+    <div class="test info">
+        <h3>測試說明</h3>
+        <p>這個頁面會測試所有修復的功能：</p>
+        <ul>
+            <li>30秒自動更新機制</li>
+            <li>強制價格獲取</li>
+            <li>快照自動創建</li>
+            <li>API連接狀況</li>
+        </ul>
+    </div>
+
+    <div class="test">
+        <h3>1. API連接測試</h3>
+        <button onclick="testAPIs()">測試API</button>
+        <div id="api-results"></div>
+    </div>
+
+    <div class="test">
+        <h3>2. 價格獲取測試</h3>
+        <button onclick="testPriceFetch()">測試價格獲取</button>
+        <div id="price-results"></div>
+    </div>
+
+    <div class="test">
+        <h3>3. 自動更新測試</h3>
+        <button onclick="startAutoUpdateTest()">開始自動更新測試</button>
+        <button onclick="stopAutoUpdateTest()">停止測試</button>
+        <div id="auto-update-results"></div>
+    </div>
+
+    <script type="module">
+        let autoUpdateInterval = null;
+        let testCount = 0;
+
+        // 測試API連接
+        window.testAPIs = async function() {
+            const resultsDiv = document.getElementById('api-results');
+            resultsDiv.innerHTML = '<p>測試中...</p>';
+            
+            let results = [];
+            
+            // 測試TWSE API
+            try {
+                const response = await fetch('https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL');
+                if (response.ok) {
+                    const data = await response.json();
+                    results.push(`✅ TWSE API: 正常 (${data.length} 筆資料)`);
+                } else {
+                    results.push(`❌ TWSE API: 失敗 (${response.status})`);
+                }
+            } catch (error) {
+                results.push(`❌ TWSE API: 錯誤 - ${error.message}`);
+            }
+            
+            // 測試即時股價API
+            try {
+                const response = await fetch('https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=tse_0050.tw&json=1&delay=0');
+                if (response.ok) {
+                    const data = await response.json();
+                    const price = data.msgArray?.[0]?.z;
+                    results.push(`✅ 即時股價API: 正常 (0050: ${price || 'N/A'})`);
+                } else {
+                    results.push(`❌ 即時股價API: 失敗 (${response.status})`);
+                }
+            } catch (error) {
+                results.push(`❌ 即時股價API: 錯誤 - ${error.message}`);
+            }
+            
+            // 測試CoinGecko API
+            try {
+                const response = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=twd');
+                if (response.ok) {
+                    const data = await response.json();
+                    const price = data.bitcoin?.twd;
+                    results.push(`✅ CoinGecko API: 正常 (BTC: ${price?.toLocaleString() || 'N/A'} TWD)`);
+                } else {
+                    results.push(`❌ CoinGecko API: 失敗 (${response.status})`);
+                }
+            } catch (error) {
+                results.push(`❌ CoinGecko API: 錯誤 - ${error.message}`);
+            }
+            
+            resultsDiv.innerHTML = results.map(r => `<p>${r}</p>`).join('');
+        };
+
+        // 測試價格獲取
+        window.testPriceFetch = async function() {
+            const resultsDiv = document.getElementById('price-results');
+            resultsDiv.innerHTML = '<p>測試價格獲取中...</p>';
+            
+            try {
+                // 動態導入價格獲取模組
+                const { fetchTWStockPrice, fetchCryptoPrice } = await import('./js/priceFetcher.js');
+                
+                let results = [];
+                
+                // 測試台股價格獲取
+                console.log('測試台股價格獲取...');
+                const twPrice = await fetchTWStockPrice('0050');
+                results.push(`台股 0050: ${twPrice ? `${twPrice} TWD` : '獲取失敗'}`);
+                
+                const twPrice2 = await fetchTWStockPrice('2330');
+                results.push(`台股 2330: ${twPrice2 ? `${twPrice2} TWD` : '獲取失敗'}`);
+                
+                // 測試加密貨幣價格獲取
+                console.log('測試加密貨幣價格獲取...');
+                const cryptoPrice = await fetchCryptoPrice('BTC', 'TWD');
+                results.push(`BTC: ${cryptoPrice ? `${cryptoPrice.toLocaleString()} TWD` : '獲取失敗'}`);
+                
+                resultsDiv.innerHTML = results.map(r => `<p>${r}</p>`).join('');
+                
+            } catch (error) {
+                resultsDiv.innerHTML = `<p class="error">測試失敗: ${error.message}</p>`;
+                console.error('價格獲取測試失敗:', error);
+            }
+        };
+
+        // 開始自動更新測試
+        window.startAutoUpdateTest = function() {
+            const resultsDiv = document.getElementById('auto-update-results');
+            testCount = 0;
+            
+            if (autoUpdateInterval) {
+                clearInterval(autoUpdateInterval);
+            }
+            
+            resultsDiv.innerHTML = '<p>開始自動更新測試，每30秒執行一次...</p>';
+            
+            autoUpdateInterval = setInterval(async () => {
+                testCount++;
+                const timestamp = new Date().toLocaleTimeString();
+                
+                try {
+                    // 模擬自動更新
+                    const { fetchTWStockPrice } = await import('./js/priceFetcher.js');
+                    const price = await fetchTWStockPrice('0050');
+                    
+                    const result = `<p>[${timestamp}] 第${testCount}次更新: 0050 = ${price || '失敗'}</p>`;
+                    resultsDiv.innerHTML += result;
+                    
+                    // 保持最新的10條記錄
+                    const lines = resultsDiv.innerHTML.split('</p>');
+                    if (lines.length > 11) {
+                        resultsDiv.innerHTML = lines.slice(-11).join('</p>');
+                    }
+                    
+                } catch (error) {
+                    resultsDiv.innerHTML += `<p class="error">[${timestamp}] 第${testCount}次更新失敗: ${error.message}</p>`;
+                }
+            }, 30000); // 30秒間隔
+        };
+
+        // 停止自動更新測試
+        window.stopAutoUpdateTest = function() {
+            if (autoUpdateInterval) {
+                clearInterval(autoUpdateInterval);
+                autoUpdateInterval = null;
+                document.getElementById('auto-update-results').innerHTML += '<p><strong>自動更新測試已停止</strong></p>';
+            }
+        };
+
+        // 頁面載入時顯示當前時間
+        document.body.insertAdjacentHTML('afterbegin', `
+            <div class="test info">
+                <h3>當前狀態</h3>
+                <p><strong>時間:</strong> ${new Date().toLocaleString('zh-TW')}</p>
+                <p><strong>測試環境:</strong> ${location.href}</p>
+            </div>
+        `);
+    </script>
+</body>
+</html>
