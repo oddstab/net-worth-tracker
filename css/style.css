@@ -97,10 +97,6 @@ select,
 .nav-tab,
 .fab,
 .modal-close,
-.asset-item,
-.liability-item,
-.stat-card,
-.legend-item,
 .range-btn {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
@@ -117,10 +113,6 @@ a:active,
 .nav-tab:active,
 .fab:active,
 .modal-close:active,
-.asset-item:active,
-.liability-item:active,
-.stat-card:active,
-.legend-item:active,
 .range-btn:active,
 .fab-menu-item:active {
   transform: scale(0.95);
@@ -271,10 +263,6 @@ body {
   flex-direction: column;
   gap: var(--spacing-xs);
   transition: transform var(--transition-fast);
-}
-
-.stat-card:active {
-  transform: scale(0.98);
 }
 
 .stat-label {
@@ -511,13 +499,18 @@ body {
   background-color: var(--bg-hover);
 }
 
-.asset-item:active {
-  transform: scale(0.98);
-}
-
 .asset-item-info {
   flex: 1;
   min-width: 0;
+}
+
+.asset-item-desc {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .asset-item-name {
@@ -538,6 +531,8 @@ body {
 .asset-item-value {
   text-align: right;
   flex-shrink: 0;
+  font-weight: 600;
+  color: var(--accent-color);
 }
 
 .asset-item-twd {
@@ -857,6 +852,15 @@ body {
   box-shadow: 0 0 0 3px var(--accent-light);
 }
 
+.form-input:disabled,
+.form-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--bg-primary);
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
 .form-input::placeholder {
   color: var(--text-muted);
 }
@@ -972,6 +976,16 @@ body {
 
 .settings-row .form-input {
   flex: 1;
+}
+
+/* ── Confirm Dialog (共用 .modal-overlay / .modal) ── */
+.btn-danger {
+  background-color: var(--color-negative);
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background-color: #e05555;
 }
 
 /* ── Toast Notification ── */
@@ -1344,11 +1358,43 @@ body {
 /* 價格區塊 */
 .summary-price-block {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
   padding: var(--spacing-md) 0;
   border-top: 1px solid var(--border-color);
   border-bottom: 1px solid var(--border-color);
+}
+
+.summary-price-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summary-monthly {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.summary-monthly-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.summary-monthly-value {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+}
+
+.summary-monthly-value.positive {
+  color: var(--color-positive);
+}
+
+.summary-monthly-value.negative {
+  color: var(--color-negative);
 }
 
 .summary-price {
@@ -1776,6 +1822,16 @@ body {
   flex: 1;
 }
 
+.legend-category-rate {
+  font-size: var(--font-size-xs);
+  color: var(--color-warning);
+  background: rgba(251, 191, 36, 0.12);
+  padding: 3px 10px;
+  border-radius: var(--border-radius-full);
+  margin: 2px 0 10px 0;
+  display: inline-block;
+}
+
 .legend-category-total {
   font-weight: 500;
   color: var(--text-primary);
@@ -1796,18 +1852,31 @@ body {
   background: var(--bg-tertiary);
   border-radius: var(--border-radius-sm);
   font-size: 13px;
+  min-width: 0;
 }
 
 .legend-item-name {
   flex: 1;
   color: var(--text-primary);
   font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.legend-item-rate {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
 }
 
 .legend-item-amount {
   color: var(--text-secondary);
   min-width: 80px;
   text-align: right;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .legend-item-percent {
@@ -1815,6 +1884,8 @@ body {
   min-width: 40px;
   text-align: right;
   font-size: 12px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 /* ── Additional Button Styles ── */
 .btn-info {
@@ -1975,7 +2046,7 @@ body {
 }
 /* ── Asset List Improvements ── */
 .asset-category, .liability-category {
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-md);
 }
 
 .category-header {
@@ -2064,6 +2135,257 @@ body {
   font-weight: 600;
   color: var(--accent-color);
   font-size: 16px;
+}
+
+/* 負債標籤列 */
+.liability-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-xs);
+}
+
+.liability-tag {
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  background-color: var(--bg-tertiary);
+  padding: 2px 8px;
+  border-radius: var(--border-radius-full);
+  white-space: nowrap;
+}
+
+.liability-tag-accent {
+  color: var(--accent-color);
+  background-color: var(--accent-light);
+  font-weight: 600;
+}
+
+.liability-tag-danger {
+  color: var(--color-negative);
+  background-color: rgba(248, 113, 113, 0.15);
+  font-weight: 600;
+}
+
+/* ── 還款明細 ── */
+.loan-schedule {
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--border-color);
+}
+
+.loan-mode-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: var(--spacing-md);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  overflow: hidden;
+}
+
+.loan-mode-btn {
+  flex: 1;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-tertiary);
+  border: none;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.loan-mode-btn + .loan-mode-btn {
+  border-left: 1px solid var(--border-color);
+}
+
+.loan-mode-btn.active {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+.loan-mode-btn:hover:not(.active) {
+  background: var(--bg-hover);
+}
+
+.loan-summary-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.loan-summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+}
+
+.loan-summary-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+}
+
+.loan-summary-value {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.loan-summary-value.accent {
+  color: var(--accent-color);
+}
+
+.loan-summary-value.negative {
+  color: var(--color-negative);
+}
+
+/* 每期應還本利和分段 */
+.loan-payment-breakdown {
+  margin-bottom: var(--spacing-md);
+}
+
+.loan-payment-title {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin-bottom: var(--spacing-xs);
+}
+
+.loan-payment-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-bottom: none;
+}
+
+.loan-payment-row:first-of-type {
+  border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+}
+
+.loan-payment-row:last-of-type {
+  border-bottom: 1px solid var(--border-color);
+  border-radius: 0 0 var(--border-radius-sm) var(--border-radius-sm);
+}
+
+.loan-payment-row:only-of-type {
+  border-bottom: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+}
+
+.loan-payment-period {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.loan-payment-amount {
+  font-size: var(--font-size-base);
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+.loan-table-wrap {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+}
+
+.loan-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-xs);
+}
+
+.loan-table th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-tertiary);
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: var(--spacing-sm) var(--spacing-xs);
+  text-align: right;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.loan-table th:first-child {
+  text-align: center;
+}
+
+.loan-table td {
+  padding: var(--spacing-xs);
+  text-align: right;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+
+.loan-table td:first-child {
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.loan-table tbody tr:hover {
+  background: var(--bg-hover);
+}
+
+/* ── 循環型計息計算器 ── */
+.revolving-calc {
+  margin-top: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border-radius: var(--border-radius-md);
+}
+
+.revolving-calc-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.revolving-calc-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.revolving-days-input {
+  width: 100px;
+  text-align: center;
+  font-size: var(--font-size-base);
+  font-weight: 600;
+}
+
+.revolving-calc-unit {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+}
+
+.revolving-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  background: var(--bg-card);
+  border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.revolving-result-label {
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.revolving-result-value {
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  color: var(--color-negative);
 }
 
 .asset-item-details, .liability-item-details {
@@ -2258,6 +2580,7 @@ body {
   justify-content: space-between;
   align-items: center;
   font-size: var(--font-size-xs);
+  margin-top: 2px;
 }
 
 .asset-label {
@@ -2365,7 +2688,7 @@ body {
 }
 
 /* ── Category Headers ── */
-.asset-category {
+.asset-category, .liability-category {
   background-color: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-lg);
@@ -2417,10 +2740,6 @@ body {
   background-color: var(--bg-hover);
 }
 
-.asset-item:active {
-  transform: scale(0.98);
-}
-
 .asset-item-info {
   flex: 1;
   min-width: 0;
@@ -2431,7 +2750,7 @@ body {
   flex-shrink: 0;
   font-size: var(--font-size-base);
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--accent-color);
   margin-left: var(--spacing-md);
 }
 

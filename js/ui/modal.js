@@ -10,6 +10,7 @@ import {
   getTWStockDetail,
   getCryptoDetail,
   getStockCompanyInfo,
+  getMonthlyChange,
 } from '../searchService.js';
 
 // ─── DOM ─────────────────────────────────────────────────────────────────────
@@ -38,6 +39,7 @@ export function closeModal() {
   overlay.classList.add('hidden');
   modalBody.innerHTML = '';
   modalEl.classList.remove('modal--wide');
+  document.body.style.overflow = '';
   
   // 清理 footer 內容
   const modalFooter = document.getElementById('modal-footer');
@@ -100,7 +102,6 @@ function selectDropdownItem(item, input, dropdown, onSelect) {
   const symbol = item.dataset.symbol;
   const name   = item.dataset.name;
   const coinId = item.dataset.coinId;
-  const price  = item.dataset.price ? parseFloat(item.dataset.price) : null;
 
   input.value = symbol;
   dropdown.classList.add('hidden');
@@ -109,13 +110,7 @@ function selectDropdownItem(item, input, dropdown, onSelect) {
   const nameInput = document.getElementById('asset-name');
   if (nameInput) nameInput.value = name;
 
-  // 自動帶入價格
-  if (price !== null && !isNaN(price)) {
-    const priceInput = document.getElementById('asset-price');
-    if (priceInput) priceInput.value = price;
-    const currencySelect = document.getElementById('asset-currency');
-    if (currencySelect) currencySelect.value = 'TWD';
-  }
+  // 不自動帶入下拉的昨收價，等摘要面板載入即時價後自動套用
 
   onSelect({ symbol, name, coinId, assetType: item.dataset.assetType });
 }
@@ -164,7 +159,7 @@ function initSearchDropdown(assetType, onSelect) {
         if (assetType === 'tw_stock') {
           const priceAttr = r.close != null ? ' data-price="' + r.close + '"' : '';
           const priceHtml = r.close != null
-            ? '<span class="sdi-price">' + NTD + r.close.toFixed(2) + '</span>'
+            ? '<span class="sdi-price">昨收 ' + NTD + r.close.toFixed(2) + '</span>'
             : '';
           return '<div class="search-dropdown-item"'
             + ' data-symbol="' + esc(r.symbol) + '"'
@@ -235,7 +230,7 @@ function showSummaryLoading() {
   panel.innerHTML = '<div class="summary-loading"><div class="summary-spinner"></div><span>載入中…</span></div>';
 }
 
-function renderStockSummary(detail, companyInfo, onPriceApply) {
+function renderStockSummary(detail, companyInfo, onPriceApply, monthly) {
   const panel = document.getElementById('asset-summary-panel');
   if (!panel) return;
 
@@ -318,8 +313,19 @@ function renderStockSummary(detail, companyInfo, onPriceApply) {
     + '<div class="summary-name">' + esc(detail.name) + '</div>'
     + '</div>'
     + '<div class="summary-price-block">'
+    + '<div class="summary-price-left">'
     + '<div class="summary-price">' + fmtPrice(detail.price) + '</div>'
     + '<div class="summary-change ' + changeClass + '">' + changeStr + '</div>'
+    + '</div>'
+    + (monthly && monthly.monthChangePercent !== null
+      ? '<div class="summary-monthly">'
+        + '<div class="summary-monthly-label">近一月</div>'
+        + '<div class="summary-monthly-value ' + (monthly.monthChangePercent >= 0 ? 'positive' : 'negative') + '">'
+        + (monthly.monthChange >= 0 ? '+' : '') + monthly.monthChange.toFixed(2)
+        + ' (' + (monthly.monthChangePercent >= 0 ? '+' : '') + monthly.monthChangePercent.toFixed(2) + '%)'
+        + '</div>'
+        + '</div>'
+      : '')
     + '</div>'
     + '<div class="summary-stats">'
     + '<div class="summary-stat"><span class="ss-label">今日高</span><span class="ss-value">' + fmtPrice(detail.high) + '</span></div>'
@@ -384,25 +390,27 @@ async function loadAndRenderSummary({ symbol, coinId, assetType }) {
   showSummaryLoading();
   modalEl.classList.add('modal--wide');
 
+  const applyPrice = (price) => {
+    const priceInput = document.getElementById('asset-price');
+    if (priceInput) priceInput.value = price;
+    const currencySelect = document.getElementById('asset-currency');
+    if (currencySelect) currencySelect.value = 'TWD';
+  };
+
   if (assetType === 'tw_stock') {
-    const [detail, companyInfo] = await Promise.all([
+    const [detail, companyInfo, monthly] = await Promise.all([
       getTWStockDetail(symbol),
       getStockCompanyInfo(symbol),
+      getMonthlyChange(symbol),
     ]);
-    renderStockSummary(detail, companyInfo, price => {
-      const priceInput = document.getElementById('asset-price');
-      if (priceInput) priceInput.value = price;
-      const currencySelect = document.getElementById('asset-currency');
-      if (currencySelect) currencySelect.value = 'TWD';
-    });
+    renderStockSummary(detail, companyInfo, applyPrice, monthly);
+    // 自動套用即時價格
+    if (detail?.price != null) applyPrice(detail.price);
   } else {
     const detail = await getCryptoDetail(coinId || symbol.toLowerCase());
-    renderCryptoSummary(detail, price => {
-      const priceInput = document.getElementById('asset-price');
-      if (priceInput) priceInput.value = price;
-      const currencySelect = document.getElementById('asset-currency');
-      if (currencySelect) currencySelect.value = 'TWD';
-    });
+    renderCryptoSummary(detail, applyPrice);
+    // 自動套用即時價格
+    if (detail?.priceTWD != null) applyPrice(detail.priceTWD);
   }
 }
 
@@ -422,45 +430,47 @@ export function openAssetModal(asset = null) {
 
   const sel = (val, opt) => val === opt ? ' selected' : '';
 
+  const dis = isEdit ? ' disabled' : '';
+  const lock = isEdit ? ' 🔒' : '';
+
   modalBody.innerHTML =
     '<div class="asset-modal-layout">'
     + '<div class="asset-form-col">'
     + '<form id="asset-form" novalidate autocomplete="off">'
 
-    // 類型
+    // 類型 + 分類（同一行）
+    + '<div class="form-row">'
     + '<div class="form-group">'
-    + '<label class="form-label" for="asset-type">類型 <span class="required">*</span></label>'
-    + '<select class="form-input" id="asset-type" name="type">'
+    + '<label class="form-label" for="asset-type">類型' + lock + '</label>'
+    + '<select class="form-input" id="asset-type" name="type"' + dis + '>'
     + '<option value="tw_stock"' + sel(type,'tw_stock') + '>台股</option>'
     + '<option value="crypto"'   + sel(type,'crypto')   + '>加密貨幣</option>'
     + '<option value="cash"'     + sel(type,'cash')     + '>現金</option>'
     + '<option value="other"'    + sel(type,'other')    + '>其他</option>'
     + '</select></div>'
+    + '<div class="form-group">'
+    + '<label class="form-label" for="asset-category">分類' + lock + '</label>'
+    + '<select class="form-input" id="asset-category" name="category"' + dis + '>'
+    + '<option value="investment"' + sel(category,'investment') + '>投資資產</option>'
+    + '<option value="liquid"'     + sel(category,'liquid')     + '>流動資產</option>'
+    + '</select></div></div>'
 
     // 代號搜尋
     + '<div class="form-group" id="symbol-group">'
-    + '<label class="form-label" for="asset-symbol">代號 / 搜尋</label>'
+    + '<label class="form-label" for="asset-symbol">代號 / 搜尋' + lock + '</label>'
     + '<div class="search-input-wrapper">'
     + '<input class="form-input" type="text" id="asset-symbol" name="symbol"'
-    + ' value="' + esc(symbol) + '" placeholder="輸入代號或名稱搜尋…" autocomplete="off" />'
+    + ' value="' + esc(symbol) + '" placeholder="輸入代號或名稱搜尋…" autocomplete="off"' + dis + ' />'
     + '<div class="search-dropdown hidden" id="symbol-dropdown"></div>'
     + '</div></div>'
 
     // 名稱
     + '<div class="form-group">'
-    + '<label class="form-label" for="asset-name">名稱 <span class="required">*</span></label>'
+    + '<label class="form-label" for="asset-name">名稱' + lock + '</label>'
     + '<input class="form-input" type="text" id="asset-name" name="asset-name-x"'
-    + ' value="' + esc(name) + '" autocomplete="off" required />'
+    + ' value="' + esc(name) + '" autocomplete="off" required' + dis + ' />'
     + '<span class="form-error" id="asset-name-error" style="display:none;"></span>'
     + '</div>'
-
-    // 分類
-    + '<div class="form-group">'
-    + '<label class="form-label" for="asset-category">分類 <span class="required">*</span></label>'
-    + '<select class="form-input" id="asset-category" name="category">'
-    + '<option value="investment"' + sel(category,'investment') + '>投資資產</option>'
-    + '<option value="liquid"'     + sel(category,'liquid')     + '>流動資產</option>'
-    + '</select></div>'
 
     // 數量
     + '<div class="form-group">'
@@ -503,6 +513,7 @@ export function openAssetModal(asset = null) {
   }
 
   overlay.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
 
   document.getElementById('modal-cancel').addEventListener('click', closeModal);
   document.getElementById('asset-form').addEventListener('submit', e => {
@@ -572,16 +583,17 @@ function handleAssetSubmit(existingAsset) {
   clearFieldError('asset-quantity-error');
   clearFieldError('asset-price-error');
 
-  const nameVal     = document.getElementById('asset-name').value.trim();
-  const symbolVal   = document.getElementById('asset-symbol')?.value.trim() || '';
-  const categoryVal = document.getElementById('asset-category').value;
-  const typeVal     = document.getElementById('asset-type').value;
+  // 編輯模式下，類型/代號/名稱/分類用原始值（欄位是 disabled 的）
+  const nameVal     = existingAsset ? existingAsset.name : document.getElementById('asset-name').value.trim();
+  const symbolVal   = existingAsset ? (existingAsset.symbol || '') : (document.getElementById('asset-symbol')?.value.trim() || '');
+  const categoryVal = existingAsset ? existingAsset.category : document.getElementById('asset-category').value;
+  const typeVal     = existingAsset ? existingAsset.type : document.getElementById('asset-type').value;
   const quantityVal = parseFloat(document.getElementById('asset-quantity').value);
   const currencyVal = document.getElementById('asset-currency').value;
   const priceVal    = parseFloat(document.getElementById('asset-price').value);
 
   let hasError = false;
-  if (!nameVal)                    { showFieldError('asset-name-error',     '請輸入資產名稱');   hasError = true; }
+  if (!existingAsset && !nameVal)   { showFieldError('asset-name-error',     '請輸入資產名稱');   hasError = true; }
   if (!validateQuantity(quantityVal)) { showFieldError('asset-quantity-error', '數量必須為正數');   hasError = true; }
   if (!validatePrice(priceVal))    { showFieldError('asset-price-error',    '每單位價格必須為正數'); hasError = true; }
   if (hasError) return;
@@ -607,15 +619,26 @@ export function openLiabilityModal(liability = null) {
   const isEdit   = liability !== null;
   modalTitle.textContent = isEdit ? '編輯負債' : '新增負債';
 
-  const name     = isEdit ? liability.name : '';
-  const category = isEdit ? liability.category : 'credit';
-  const amount   = isEdit ? liability.amount : '';
-  const currency = isEdit ? liability.currency : 'TWD';
+  const name       = isEdit ? liability.name : '';
+  const category   = isEdit ? liability.category : 'credit';
+  const amount     = isEdit ? liability.amount : '';
+  const currency   = isEdit ? liability.currency : 'TWD';
+  const rate       = isEdit ? (liability.interestRate ?? '') : '';
+  const terms      = isEdit ? (liability.terms ?? '') : '';
+  const startDate  = isEdit ? (liability.startDate ?? '') : '';
+  const endDate    = isEdit ? (liability.endDate ?? '') : '';
+  const creditLine   = isEdit ? (liability.creditLine ?? '') : '';
+  const drawdownDate = isEdit ? (liability.drawdownDate ?? '') : '';
 
   const sel = (val, opt) => val === opt ? ' selected' : '';
 
+  const isRevolving = (cat) => cat === 'pledge' || cat === 'mortgage';
+  const isInstallment = (cat) => cat === 'credit' || cat === 'home_loan';
+
   modalBody.innerHTML =
     '<form id="liability-form" novalidate autocomplete="off">'
+    // 名稱 + 分類
+    + '<div class="form-row">'
     + '<div class="form-group">'
     + '<label class="form-label" for="liability-name">名稱 <span class="required">*</span></label>'
     + '<input class="form-input" type="text" id="liability-name" name="name"'
@@ -625,11 +648,14 @@ export function openLiabilityModal(liability = null) {
     + '<div class="form-group">'
     + '<label class="form-label" for="liability-category">分類 <span class="required">*</span></label>'
     + '<select class="form-input" id="liability-category" name="category">'
-    + '<option value="credit"'   + sel(category,'credit')   + '>信貸</option>'
-    + '<option value="pledge"'   + sel(category,'pledge')   + '>質押借款</option>'
-    + '<option value="mortgage"' + sel(category,'mortgage') + '>理財型房貸</option>'
-    + '<option value="other"'    + sel(category,'other')    + '>其他</option>'
-    + '</select></div>'
+    + '<option value="credit"'       + sel(category,'credit')       + '>信貸</option>'
+    + '<option value="home_loan"'    + sel(category,'home_loan')    + '>房貸</option>'
+    + '<option value="pledge"'       + sel(category,'pledge')       + '>質押借款</option>'
+    + '<option value="mortgage"'     + sel(category,'mortgage')     + '>理財型房貸</option>'
+    + '<option value="other"'        + sel(category,'other')        + '>其他</option>'
+    + '</select></div></div>'
+
+    // 共用：幣別 + 金額
     + '<div class="form-row">'
     + '<div class="form-group">'
     + '<label class="form-label" for="liability-currency">幣別</label>'
@@ -638,14 +664,62 @@ export function openLiabilityModal(liability = null) {
     + '<option value="USD"' + sel(currency,'USD') + '>USD</option>'
     + '</select></div>'
     + '<div class="form-group">'
-    + '<label class="form-label" for="liability-amount">金額 <span class="required">*</span></label>'
+    + '<label class="form-label" for="liability-amount">'
+    + '<span id="amount-label-text">' + (isRevolving(category) ? '動用金額' : '金額') + '</span>'
+    + ' <span class="required">*</span></label>'
     + '<input class="form-input" type="number" id="liability-amount" name="amount"'
     + ' value="' + amount + '" min="0" step="any" required />'
     + '<span class="form-error" id="liability-amount-error" style="display:none;"></span>'
     + '</div></div>'
+
+    // 共用：年利率
+    + '<div class="form-row">'
+    + '<div class="form-group">'
+    + '<label class="form-label" for="liability-rate">年利率 (%)</label>'
+    + '<input class="form-input" type="number" id="liability-rate" name="rate"'
+    + ' value="' + rate + '" min="0" max="100" step="0.01" placeholder="例: 2.5" />'
+    + '</div>'
+
+    // 分期型：期數
+    + '<div class="form-group" id="terms-group" class="' + (isInstallment(category) ? '' : 'hidden') + '">'
+    + '<label class="form-label" for="liability-terms">期數 (月)</label>'
+    + '<input class="form-input" type="number" id="liability-terms" name="terms"'
+    + ' value="' + terms + '" min="0" step="1" placeholder="例: 84" />'
+    + '</div></div>'
+
+    // 分期型：借款日 + 還款日
+    + '<div class="form-row" id="dates-group"' + (isInstallment(category) ? '' : ' style="display:none"') + '>'
+    + '<div class="form-group">'
+    + '<label class="form-label" for="liability-start">借款日</label>'
+    + '<input class="form-input" type="date" id="liability-start" name="startDate"'
+    + ' value="' + esc(startDate) + '" />'
+    + '</div>'
+    + '<div class="form-group">'
+    + '<label class="form-label" for="liability-end">還款日</label>'
+    + '<input class="form-input" type="date" id="liability-end" name="endDate"'
+    + ' value="' + esc(endDate) + '" />'
+    + '</div></div>'
+
+    // 循環型：額度 + 動用日期
+    + '<div id="revolving-extra"' + (isRevolving(category) ? '' : ' style="display:none"') + '>'
+    + '<div class="form-row">'
+    + '<div class="form-group">'
+    + '<label class="form-label" for="revolving-credit-line">核准額度</label>'
+    + '<input class="form-input" type="number" id="revolving-credit-line" name="creditLine"'
+    + ' value="' + creditLine + '" min="0" step="any" placeholder="例: 1000000" />'
+    + '</div>'
+    + '<div class="form-group">'
+    + '<label class="form-label" for="revolving-drawdown-date">動用日期</label>'
+    + '<input class="form-input" type="date" id="revolving-drawdown-date" name="drawdownDate"'
+    + ' value="' + esc(drawdownDate) + '" />'
+    + '</div></div>'
+    + '<div class="form-hint" style="margin:var(--spacing-sm) 0 var(--spacing-md);color:var(--text-muted);font-size:var(--font-size-xs);">'
+    + '💡 循環型貸款：有動用才計息，每月只付利息，到期還本金'
+    + '</div>'
+    + '</div>'
+
     + '</form>';
 
-  // 將按鈕添加到 footer
   const modalFooter = document.getElementById('modal-footer');
   if (modalFooter) {
     modalFooter.innerHTML = 
@@ -654,10 +728,27 @@ export function openLiabilityModal(liability = null) {
   }
 
   overlay.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
   document.getElementById('modal-cancel').addEventListener('click', closeModal);
   document.getElementById('liability-form').addEventListener('submit', e => {
     e.preventDefault();
     handleLiabilitySubmit(liability);
+  });
+
+  function updateFieldVisibility(cat) {
+    const termsGroup = document.getElementById('terms-group');
+    const datesGroup = document.getElementById('dates-group');
+    const revolvingExtra = document.getElementById('revolving-extra');
+    const amountLabel = document.getElementById('amount-label-text');
+    
+    if (termsGroup) termsGroup.style.display = isInstallment(cat) ? '' : 'none';
+    if (datesGroup) datesGroup.style.display = isInstallment(cat) ? '' : 'none';
+    if (revolvingExtra) revolvingExtra.style.display = isRevolving(cat) ? '' : 'none';
+    if (amountLabel) amountLabel.textContent = isRevolving(cat) ? '動用金額' : '金額';
+  }
+
+  document.getElementById('liability-category').addEventListener('change', e => {
+    updateFieldVisibility(e.target.value);
   });
 }
 
@@ -669,21 +760,28 @@ function handleLiabilitySubmit(existingLiability) {
   const categoryVal = document.getElementById('liability-category').value;
   const amountVal   = parseFloat(document.getElementById('liability-amount').value);
   const currencyVal = document.getElementById('liability-currency').value;
+  const rateVal     = parseFloat(document.getElementById('liability-rate')?.value) || null;
+  const termsVal    = parseInt(document.getElementById('liability-terms')?.value) || null;
+  const startVal    = document.getElementById('liability-start')?.value || null;
+  const endVal      = document.getElementById('liability-end')?.value || null;
+  const creditLineVal = parseFloat(document.getElementById('revolving-credit-line')?.value) || null;
+  const drawdownVal = document.getElementById('revolving-drawdown-date')?.value || null;
 
   let hasError = false;
-  if (!nameVal)               { showFieldError('liability-name-error',   '請輸入負債名稱'); hasError = true; }
+  if (!nameVal) { showFieldError('liability-name-error', '請輸入負債名稱'); hasError = true; }
   if (!validateAmount(amountVal)) { showFieldError('liability-amount-error', '金額必須為正數'); hasError = true; }
   if (hasError) return;
 
+  const data = {
+    name: nameVal, category: categoryVal, amount: amountVal, currency: currencyVal,
+    interestRate: rateVal, terms: termsVal, startDate: startVal, endDate: endVal,
+    creditLine: creditLineVal, drawdownDate: drawdownVal,
+  };
+
   if (existingLiability) {
-    state.updateLiability(existingLiability.id, {
-      name: nameVal, category: categoryVal, amount: amountVal, currency: currencyVal,
-    });
+    state.updateLiability(existingLiability.id, data);
   } else {
-    state.addLiability({
-      id: generateUUID(), name: nameVal, category: categoryVal,
-      amount: amountVal, currency: currencyVal,
-    });
+    state.addLiability({ id: generateUUID(), ...data });
   }
   closeModal();
 }
@@ -692,9 +790,7 @@ function handleLiabilitySubmit(existingLiability) {
 
 modalClose.addEventListener('click', closeModal);
 
-overlay.addEventListener('click', e => {
-  if (!e.target.closest('#modal')) closeModal();
-});
+// 不再點擊 overlay 關閉 modal，只能用 X 或取消按鈕關閉
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && !overlay.classList.contains('hidden')) closeModal();

@@ -197,6 +197,24 @@
     </div>
   </div>
 
+  <!-- Confirm Dialog (共用 modal 樣式) -->
+  <div class="modal-overlay hidden" id="confirm-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title">確認刪除</h2>
+        <button class="modal-close" id="confirm-close" aria-label="關閉">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <div style="font-size:2.5rem; margin-bottom:var(--spacing-md);">🗑️</div>
+        <div id="confirm-message" style="font-size:var(--font-size-base); color:var(--text-primary); line-height:1.6;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="confirm-cancel">取消</button>
+        <button class="btn btn-danger" id="confirm-ok">刪除</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div class="toast hidden" id="toast" role="alert" aria-live="polite"></div>
 

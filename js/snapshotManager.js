@@ -112,5 +112,14 @@ export function filterSnapshotsByRange(snapshots, range) {
  */
 export function autoSnapshot(assets, liabilities, rate, snapshots) {
   const { netWorth } = calculateTotals(assets, liabilities, rate);
-  return takeSnapshot(snapshots, netWorth);
+  let updated = takeSnapshot(snapshots, netWorth);
+  
+  // 限制快照數量：保留最近 365 天的快照
+  if (updated.length > 365) {
+    updated = updated
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .slice(-365);
+  }
+  
+  return updated;
 }

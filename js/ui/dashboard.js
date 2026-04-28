@@ -209,6 +209,20 @@ export function renderPieChart(currentState) {
     
     // 負債詳細列表
     if (breakdown.liabilityItems.length > 0) {
+      // 計算加權平均利率
+      let weightedRateSum = 0;
+      let rateWeightSum = 0;
+      for (const l of liabilities) {
+        if (l.interestRate && l.amount > 0) {
+          weightedRateSum += l.interestRate * l.amount;
+          rateWeightSum += l.amount;
+        }
+      }
+      const avgRate = rateWeightSum > 0 ? (weightedRateSum / rateWeightSum) : null;
+      const avgRateHtml = avgRate !== null
+        ? `<div class="legend-category-rate">平均利率 ${avgRate.toFixed(2)}%</div>`
+        : '';
+
       legendHtml += `
         <div class="legend-category">
           <div class="legend-category-header">
@@ -216,10 +230,11 @@ export function renderPieChart(currentState) {
             <span class="legend-category-title">債務</span>
             <span class="legend-category-total">${formatNTD(totals.totalLiabilities)} (${pieData.percentages[1].toFixed(1)}%)</span>
           </div>
+          ${avgRateHtml}
           <div class="legend-items">
             ${breakdown.liabilityItems.map(item => `
               <div class="legend-item-detail">
-                <span class="legend-item-name">${item.name}</span>
+                <span class="legend-item-name">${item.name}${item.interestRate ? ` <span class="legend-item-rate">${item.interestRate}%</span>` : ''}</span>
                 <span class="legend-item-amount">${formatNTD(item.amount)}</span>
                 <span class="legend-item-percent">${item.percentage.toFixed(1)}%</span>
               </div>

@@ -422,3 +422,73 @@ export function getCacheStatus() {
     }
   };
 }
+
+// ─── 月漲幅計算 ───────────────────────────────────────────────────────────────
+
+/**
+ * 從 TWSE STOCK_DAY API 抓取個股月報，計算近一個月漲幅。
+ * 邏輯：取 30 天前最接近的交易日收盤價，與當前價格比較。
+ * @param {string} symbol 股票代號
+ * @returns {Promise<{monthChange: number|null, monthChangePercent: number|null, monthAgoPrice: number|null}>}
+ */
+export async function getMonthlyChange(symbol) {
+  const empty = { monthChange: null, monthChangePercent: null, monthAgoPrice: null };
+  try {
+    const now = new Date();
+    // 目標：30 天前的收盤價
+    const targetDate = new Date(now);
+    targetDate.setDate(targetDate.getDate() - 30);
+    
+    // 需要抓目標日期所在月份的資料
+    const targetMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1);
+    const twseDate = `${targetMonth.getFullYear()}${String(targetMonth.getMonth() + 1).padStart(2, '0')}01`;
+    
+    const stockNo = encodeURIComponent(symbol);
+    const url = `https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date=${twseDate}&stockNo=${stockNo}`;
+    
+    const res = await fetchWithFallback([url, proxied(url)]);
+    if (!res) return empty;
+    
+    const data = await res.json();
+    if (data.stat !== 'OK' || !data.data || data.data.length === 0) return empty;
+    
+    // data.data 每行: [日期(民國), 成交股數, 成交金額, 開盤價, 最高價, 最低價, 收盤價, 漲跌價差, 成交筆數]
+    // 日期格式: "114/03/28" (民國年)
+    // 找最接近 30 天前的那筆
+    const targetTime = targetDate.getTime();
+    let bestRow = null;
+    let bestDiff = Infinity;
+    
+    for (const row of data.data) {
+      // 解析民國年日期 "114/03/28" → 2025/03/28
+      const parts = row[0].trim().split('/');
+      if (parts.length !== 3) continue;
+      const y = parseInt(parts[0]) + 1911;
+      const m = parseInt(parts[1]) - 1;
+      const d = parseInt(parts[2]);
+      const rowDate = new Date(y, m, d);
+      const diff = Math.abs(rowDate.getTime() - targetTime);
+      
+      if (diff < bestDiff) {
+        bestDiff = diff;
+        bestRow = row;
+      }
+    }
+    
+    if (!bestRow) return empty;
+    
+    const monthAgoPrice = parseFloatSafe(bestRow[6]);
+    if (!monthAgoPrice || monthAgoPrice === 0) return empty;
+    
+    // 取得當前價格（用已經載入的 detail，避免重複 API 呼叫）
+    const detail = await getTWStockDetail(symbol);
+    if (!detail?.price) return { ...empty, monthAgoPrice };
+    
+    const monthChange = detail.price - monthAgoPrice;
+    const monthChangePercent = (monthChange / monthAgoPrice) * 100;
+    
+    return { monthChange, monthChangePercent, monthAgoPrice };
+  } catch { /* ignore */ }
+  
+  return empty;
+}

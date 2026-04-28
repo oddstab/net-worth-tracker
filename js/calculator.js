@@ -80,6 +80,10 @@ export function calculateTotals(assets, liabilities, rate) {
     .filter(l => l.category === 'credit')
     .reduce((sum, l) => sum + toTWD(l, rate), 0);
 
+  const homeLoanTotal = liabilities
+    .filter(l => l.category === 'home_loan')
+    .reduce((sum, l) => sum + toTWD(l, rate), 0);
+
   const pledgeTotal = liabilities
     .filter(l => l.category === 'pledge')
     .reduce((sum, l) => sum + toTWD(l, rate), 0);
@@ -92,7 +96,7 @@ export function calculateTotals(assets, liabilities, rate) {
     .filter(l => l.category === 'other')
     .reduce((sum, l) => sum + toTWD(l, rate), 0);
 
-  const totalLiabilities = creditTotal + pledgeTotal + mortgageTotal + otherLiabilityTotal;
+  const totalLiabilities = creditTotal + homeLoanTotal + pledgeTotal + mortgageTotal + otherLiabilityTotal;
 
   const netWorth = totalAssets - totalLiabilities;
 
@@ -101,6 +105,7 @@ export function calculateTotals(assets, liabilities, rate) {
     liquidTotal,
     totalAssets,
     creditTotal,
+    homeLoanTotal,
     pledgeTotal,
     mortgageTotal,
     otherLiabilityTotal,
@@ -408,7 +413,8 @@ export function calculateAssetBreakdown(assets, liabilities, rate) {
         amount,
         percentage,
         details,
-        category: liability.category
+        category: liability.category,
+        interestRate: liability.interestRate || null,
       };
     })
     .sort((a, b) => b.amount - a.amount);
@@ -542,4 +548,140 @@ export function calculateMonthlyGrowthRate(snapshots) {
   const periodGrowthRate = ((latest.netWorth - earliest.netWorth) / Math.abs(earliest.netWorth)) * 100;
   
   return (periodGrowthRate / daysDiff) * 30;
+}
+
+// ─── 貸款攤還計算 ─────────────────────────────────────────────────────────────
+
+/**
+ * 計算等額本息還款明細表。
+ *
+ * @param {number} principal  貸款本金
+ * @param {number} annualRate 年利率 (%)，例如 2.5 代表 2.5%
+ * @param {number} totalTerms 總期數（月）
+ * @returns {{
+ *   monthlyPayment: number,
+ *   totalPayment: number,
+ *   totalInterest: number,
+ *   schedule: Array<{
+ *     term: number,
+ *     principalPart: number,
+ *     interestPart: number,
+ *     payment: number,
+ *     remainingBalance: number,
+ *     cumulativeInterest: number
+ *   }>
+ * }}
+ */
+export function calculateLoanSchedule(principal, annualRate, totalTerms) {
+  if (!principal || principal <= 0 || !totalTerms || totalTerms <= 0) {
+    return { monthlyPayment: 0, totalPayment: 0, totalInterest: 0, schedule: [] };
+  }
+
+  const monthlyRate = (annualRate / 100) / 12;
+  let monthlyPayment;
+
+  if (monthlyRate === 0) {
+    monthlyPayment = Math.round(principal / totalTerms);
+  } else {
+    const factor = Math.pow(1 + monthlyRate, totalTerms);
+    monthlyPayment = Math.round(principal * monthlyRate * factor / (factor - 1));
+  }
+
+  const schedule = [];
+  let balance = principal; // 用整數追蹤餘額
+  let cumulativeInterest = 0;
+
+  for (let i = 1; i <= totalTerms; i++) {
+    // 銀行做法：利息 = 餘額 × 月利率，取整
+    const interestPart = Math.round(balance * monthlyRate);
+    let principalPart;
+    let payment;
+
+    if (i === totalTerms) {
+      // 最後一期：還清所有剩餘本金
+      principalPart = balance;
+      payment = balance + interestPart;
+    } else {
+      payment = monthlyPayment;
+      principalPart = payment - interestPart;
+    }
+
+    balance -= principalPart;
+    cumulativeInterest += interestPart;
+
+    schedule.push({
+      term: i,
+      principalPart,
+      interestPart,
+      payment,
+      remainingBalance: Math.max(0, balance),
+      cumulativeInterest,
+    });
+  }
+
+  const actualTotalPayment = schedule.reduce((sum, r) => sum + r.payment, 0);
+  const lastPayment = schedule.length > 0 ? schedule[schedule.length - 1].payment : 0;
+  const hasIrregularLast = lastPayment !== monthlyPayment;
+
+  return {
+    monthlyPayment,
+    lastMonthPayment: lastPayment,
+    hasIrregularLast,
+    totalPayment: actualTotalPayment,
+    totalInterest: cumulativeInterest,
+    schedule,
+  };
+}
+
+/**
+ * 計算本金平均攤還（等額本金）還款明細表。
+ * 每期還本金額固定，利息逐月遞減。
+ *
+ * @param {number} principal  貸款本金
+ * @param {number} annualRate 年利率 (%)
+ * @param {number} totalTerms 總期數（月）
+ * @returns {same as calculateLoanSchedule}
+ */
+export function calculateEqualPrincipalSchedule(principal, annualRate, totalTerms) {
+  if (!principal || principal <= 0 || !totalTerms || totalTerms <= 0) {
+    return { monthlyPayment: 0, lastMonthPayment: 0, hasIrregularLast: false, totalPayment: 0, totalInterest: 0, schedule: [] };
+  }
+
+  const monthlyRate = (annualRate / 100) / 12;
+  const fixedPrincipal = Math.round(principal / totalTerms);
+
+  const schedule = [];
+  let balance = principal;
+  let cumulativeInterest = 0;
+
+  for (let i = 1; i <= totalTerms; i++) {
+    const interestPart = Math.round(balance * monthlyRate);
+    const principalPart = (i === totalTerms) ? balance : fixedPrincipal;
+    const payment = principalPart + interestPart;
+
+    balance -= principalPart;
+    cumulativeInterest += interestPart;
+
+    schedule.push({
+      term: i,
+      principalPart,
+      interestPart,
+      payment,
+      remainingBalance: Math.max(0, balance),
+      cumulativeInterest,
+    });
+  }
+
+  const firstPayment = schedule[0]?.payment || 0;
+  const lastPayment = schedule[schedule.length - 1]?.payment || 0;
+  const actualTotalPayment = schedule.reduce((sum, r) => sum + r.payment, 0);
+
+  return {
+    monthlyPayment: firstPayment,
+    lastMonthPayment: lastPayment,
+    hasIrregularLast: true, // 本金攤還每期都不同
+    totalPayment: actualTotalPayment,
+    totalInterest: cumulativeInterest,
+    schedule,
+  };
 }

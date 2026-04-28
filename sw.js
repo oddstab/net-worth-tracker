@@ -6,7 +6,7 @@
  *  - API requests (TWSE, CoinGecko): Network First (no cache on failure)
  */
 
-const CACHE_NAME = 'nwt-app-shell-v2';
+const CACHE_NAME = 'nwt-app-shell-v3';
 
 /** App Shell assets to pre-cache on install */
 const APP_SHELL = [
