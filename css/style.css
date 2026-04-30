@@ -893,6 +893,125 @@ body {
   gap: var(--spacing-md);
 }
 
+/* ── Drawdown Slider (循環型貸款動用金額) ── */
+.drawdown-slider-section {
+  margin: var(--spacing-md) 0 var(--spacing-sm);
+}
+
+.drawdown-slider-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-sm);
+}
+
+.drawdown-slider-header .form-label {
+  margin-bottom: 0;
+}
+
+.drawdown-percent-display {
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--accent-color);
+  min-width: 40px;
+  text-align: right;
+}
+
+.drawdown-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, var(--accent-color) 0%, var(--bg-tertiary) 0%);
+  outline: none;
+  cursor: pointer;
+  margin-bottom: var(--spacing-sm);
+}
+
+.drawdown-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  cursor: pointer;
+  border: 2px solid var(--bg-secondary);
+  box-shadow: 0 0 0 3px var(--accent-light);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.drawdown-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 5px var(--accent-light);
+}
+
+.drawdown-slider::-webkit-slider-thumb:active {
+  transform: scale(1.05);
+}
+
+.drawdown-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-color);
+  cursor: pointer;
+  border: 2px solid var(--bg-secondary);
+  box-shadow: 0 0 0 3px var(--accent-light);
+}
+
+.drawdown-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-tertiary);
+}
+
+.drawdown-slider:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 4px;
+}
+
+.drawdown-quick-btns {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-sm);
+}
+
+.drawdown-quick-btn {
+  min-height: 36px;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--border-radius-sm);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-tertiary);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.drawdown-quick-btn:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+}
+
+.drawdown-quick-btn:active {
+  transform: scale(0.95);
+}
+
+.drawdown-quick-btn.active {
+  background-color: var(--accent-color);
+  color: #fff;
+  border-color: var(--accent-color);
+}
+
+.drawdown-quick-btn:focus-visible {
+  outline: 2px solid var(--accent-color);
+  outline-offset: 2px;
+}
+
 /* ── Buttons ── */
 .btn {
   min-height: var(--touch-target);
@@ -2760,6 +2879,35 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Liability Item (與 asset-item 一致的佈局) ── */
+.liability-item {
+  display: flex;
+  align-items: flex-start;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-color);
+  gap: var(--spacing-md);
+  transition: background-color var(--transition-fast);
+}
+
+.liability-item:last-child {
+  border-bottom: none;
+}
+
+.liability-item:hover {
+  background-color: var(--bg-hover);
+}
+
+.liability-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.liability-item-actions {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-shrink: 0;
+}
+
 /* ── Responsive Adjustments ── */
 @media (max-width: 768px) {
   .asset-item {
@@ -2780,6 +2928,18 @@ body {
   }
   
   .asset-item-actions {
+    justify-content: flex-end;
+    margin-top: var(--spacing-xs);
+  }
+  
+  .liability-item {
+    padding: var(--spacing-sm) var(--spacing-md);
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm);
+  }
+  
+  .liability-item-actions {
     justify-content: flex-end;
     margin-top: var(--spacing-xs);
   }

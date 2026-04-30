@@ -621,13 +621,13 @@ export function openLiabilityModal(liability = null) {
 
   const name       = isEdit ? liability.name : '';
   const category   = isEdit ? liability.category : 'credit';
-  const amount     = isEdit ? liability.amount : '';
+  const amount     = isEdit ? (liability.amount ? liability.amount / 10000 : '') : '';
   const currency   = isEdit ? liability.currency : 'TWD';
   const rate       = isEdit ? (liability.interestRate ?? '') : '';
   const terms      = isEdit ? (liability.terms ?? '') : '';
   const startDate  = isEdit ? (liability.startDate ?? '') : '';
   const endDate    = isEdit ? (liability.endDate ?? '') : '';
-  const creditLine   = isEdit ? (liability.creditLine ?? '') : '';
+  const creditLine   = isEdit ? (liability.creditLine ? liability.creditLine / 10000 : '') : '';
   const drawdownDate = isEdit ? (liability.drawdownDate ?? '') : '';
 
   const sel = (val, opt) => val === opt ? ' selected' : '';
@@ -655,33 +655,38 @@ export function openLiabilityModal(liability = null) {
     + '<option value="other"'        + sel(category,'other')        + '>其他</option>'
     + '</select></div></div>'
 
-    // 共用：幣別 + 金額
-    + '<div class="form-row">'
+    // 共用：幣別 + 金額（非循環型）/ 幣別 + 年利率（循環型）
+    + '<div class="form-row" id="currency-amount-row">'
     + '<div class="form-group">'
     + '<label class="form-label" for="liability-currency">幣別</label>'
     + '<select class="form-input" id="liability-currency" name="currency">'
     + '<option value="TWD"' + sel(currency,'TWD') + '>TWD</option>'
     + '<option value="USD"' + sel(currency,'USD') + '>USD</option>'
     + '</select></div>'
-    + '<div class="form-group">'
+    + '<div class="form-group" id="amount-group-normal"' + (isRevolving(category) ? ' style="display:none"' : '') + '>'
     + '<label class="form-label" for="liability-amount">'
-    + '<span id="amount-label-text">' + (isRevolving(category) ? '動用金額' : '金額') + '</span>'
+    + '<span id="amount-label-text">金額 (萬)</span>'
     + ' <span class="required">*</span></label>'
     + '<input class="form-input" type="number" id="liability-amount" name="amount"'
-    + ' value="' + amount + '" min="0" step="any" required />'
+    + ' value="' + amount + '" min="0" step="any" placeholder="例: 700" required />'
     + '<span class="form-error" id="liability-amount-error" style="display:none;"></span>'
-    + '</div></div>'
+    + '</div>'
+    // 循環型時：年利率放在幣別旁邊
+    + '<div class="form-group" id="rate-group-revolving"' + (isRevolving(category) ? '' : ' style="display:none"') + '>'
+    + '<label class="form-label" for="liability-rate-rev">年利率 (%)</label>'
+    + '<input class="form-input" type="number" id="liability-rate-rev" name="rate-rev"'
+    + ' value="' + rate + '" min="0" max="100" step="0.01" placeholder="例: 2.5" />'
+    + '</div>'
+    + '</div>'
 
-    // 共用：年利率
-    + '<div class="form-row">'
+    // 非循環型：年利率 + 期數
+    + '<div class="form-row" id="rate-terms-row"' + (isRevolving(category) ? ' style="display:none"' : (isInstallment(category) ? '' : ' style="grid-template-columns:1fr"')) + '>'
     + '<div class="form-group">'
     + '<label class="form-label" for="liability-rate">年利率 (%)</label>'
     + '<input class="form-input" type="number" id="liability-rate" name="rate"'
     + ' value="' + rate + '" min="0" max="100" step="0.01" placeholder="例: 2.5" />'
     + '</div>'
-
-    // 分期型：期數
-    + '<div class="form-group" id="terms-group" class="' + (isInstallment(category) ? '' : 'hidden') + '">'
+    + '<div class="form-group" id="terms-group"' + (isInstallment(category) ? '' : ' style="display:none"') + '>'
     + '<label class="form-label" for="liability-terms">期數 (月)</label>'
     + '<input class="form-input" type="number" id="liability-terms" name="terms"'
     + ' value="' + terms + '" min="0" step="1" placeholder="例: 84" />'
@@ -700,19 +705,42 @@ export function openLiabilityModal(liability = null) {
     + ' value="' + esc(endDate) + '" />'
     + '</div></div>'
 
-    // 循環型：額度 + 動用日期
+    // 循環型：核准額度 + 動用金額 + 滑桿
     + '<div id="revolving-extra"' + (isRevolving(category) ? '' : ' style="display:none"') + '>'
     + '<div class="form-row">'
     + '<div class="form-group">'
-    + '<label class="form-label" for="revolving-credit-line">核准額度</label>'
+    + '<label class="form-label" for="revolving-credit-line">核准額度 (萬)</label>'
     + '<input class="form-input" type="number" id="revolving-credit-line" name="creditLine"'
-    + ' value="' + creditLine + '" min="0" step="any" placeholder="例: 1000000" />'
+    + ' value="' + creditLine + '" min="0" step="any" placeholder="例: 100" />'
     + '</div>'
+    + '<div class="form-group">'
+    + '<label class="form-label" for="revolving-amount">動用金額 (萬) <span class="required">*</span></label>'
+    + '<input class="form-input" type="number" id="revolving-amount" name="revolving-amount"'
+    + ' value="' + amount + '" min="0" step="any" />'
+    + '</div></div>'
+
+    // 動用金額滑桿 + 快捷按鈕
+    + '<div class="drawdown-slider-section" id="drawdown-slider-section">'
+    + '<div class="drawdown-slider-header">'
+    + '<label class="form-label">動用比例</label>'
+    + '<span class="drawdown-percent-display" id="drawdown-percent-display">0%</span>'
+    + '</div>'
+    + '<input type="range" class="drawdown-slider" id="drawdown-slider"'
+    + ' min="0" max="100" step="1" value="0" />'
+    + '<div class="drawdown-quick-btns">'
+    + '<button type="button" class="drawdown-quick-btn" data-percent="25">25%</button>'
+    + '<button type="button" class="drawdown-quick-btn" data-percent="50">50%</button>'
+    + '<button type="button" class="drawdown-quick-btn" data-percent="75">75%</button>'
+    + '<button type="button" class="drawdown-quick-btn" data-percent="100">100%</button>'
+    + '</div>'
+    + '</div>'
+
     + '<div class="form-group">'
     + '<label class="form-label" for="revolving-drawdown-date">動用日期</label>'
     + '<input class="form-input" type="date" id="revolving-drawdown-date" name="drawdownDate"'
     + ' value="' + esc(drawdownDate) + '" />'
-    + '</div></div>'
+    + '</div>'
+
     + '<div class="form-hint" style="margin:var(--spacing-sm) 0 var(--spacing-md);color:var(--text-muted);font-size:var(--font-size-xs);">'
     + '💡 循環型貸款：有動用才計息，每月只付利息，到期還本金'
     + '</div>'
@@ -739,17 +767,120 @@ export function openLiabilityModal(liability = null) {
     const termsGroup = document.getElementById('terms-group');
     const datesGroup = document.getElementById('dates-group');
     const revolvingExtra = document.getElementById('revolving-extra');
-    const amountLabel = document.getElementById('amount-label-text');
+    const amountGroupNormal = document.getElementById('amount-group-normal');
+    const rateTermsRow = document.getElementById('rate-terms-row');
+    const rateGroupRevolving = document.getElementById('rate-group-revolving');
     
     if (termsGroup) termsGroup.style.display = isInstallment(cat) ? '' : 'none';
     if (datesGroup) datesGroup.style.display = isInstallment(cat) ? '' : 'none';
     if (revolvingExtra) revolvingExtra.style.display = isRevolving(cat) ? '' : 'none';
-    if (amountLabel) amountLabel.textContent = isRevolving(cat) ? '動用金額' : '金額';
+    // 循環型時隱藏原本的金額欄位，顯示年利率在幣別旁邊
+    if (amountGroupNormal) amountGroupNormal.style.display = isRevolving(cat) ? 'none' : '';
+    if (rateGroupRevolving) rateGroupRevolving.style.display = isRevolving(cat) ? '' : 'none';
+    // 循環型時隱藏獨立的年利率行
+    if (rateTermsRow) {
+      rateTermsRow.style.display = isRevolving(cat) ? 'none' : '';
+      rateTermsRow.style.gridTemplateColumns = isInstallment(cat) ? '1fr 1fr' : '1fr';
+    }
+    // 同步兩個年利率欄位的值
+    const rateMain = document.getElementById('liability-rate');
+    const rateRev = document.getElementById('liability-rate-rev');
+    if (isRevolving(cat) && rateMain && rateRev) {
+      rateRev.value = rateMain.value;
+    } else if (!isRevolving(cat) && rateMain && rateRev) {
+      rateMain.value = rateRev.value;
+    }
   }
 
   document.getElementById('liability-category').addEventListener('change', e => {
     updateFieldVisibility(e.target.value);
   });
+
+  // ── 動用金額滑桿邏輯 ──
+  initDrawdownSlider(isRevolving(category), amount, creditLine);
+}
+
+function initDrawdownSlider(isActive, currentAmount, currentCreditLine) {
+  const slider = document.getElementById('drawdown-slider');
+  const percentDisplay = document.getElementById('drawdown-percent-display');
+  const amountInput = document.getElementById('revolving-amount');
+  const creditLineInput = document.getElementById('revolving-credit-line');
+  const quickBtns = document.querySelectorAll('.drawdown-quick-btn');
+
+  if (!slider || !amountInput || !creditLineInput) return;
+
+  function getCreditLine() {
+    return parseFloat(creditLineInput.value) || 0;
+  }
+
+  function updateSliderFill(pct) {
+    slider.style.background = 'linear-gradient(to right, var(--accent-color) ' + pct + '%, var(--bg-tertiary) ' + pct + '%)';
+  }
+
+  function syncSliderFromAmount() {
+    const cl = getCreditLine();
+    const amt = parseFloat(amountInput.value) || 0;
+    if (cl > 0) {
+      const pct = Math.min(Math.round((amt / cl) * 100), 100);
+      slider.value = pct;
+      if (percentDisplay) percentDisplay.textContent = pct + '%';
+      updateQuickBtnActive(pct);
+      updateSliderFill(pct);
+    } else {
+      slider.value = 0;
+      if (percentDisplay) percentDisplay.textContent = '0%';
+      updateQuickBtnActive(0);
+      updateSliderFill(0);
+    }
+  }
+
+  function setAmountFromPercent(pct) {
+    const cl = getCreditLine();
+    if (cl > 0) {
+      const amt = Math.round(cl * pct / 100);
+      amountInput.value = amt;
+      slider.value = pct;
+      if (percentDisplay) percentDisplay.textContent = pct + '%';
+      updateQuickBtnActive(pct);
+      updateSliderFill(pct);
+    }
+  }
+
+  function updateQuickBtnActive(pct) {
+    quickBtns.forEach(btn => {
+      const btnPct = parseInt(btn.dataset.percent);
+      btn.classList.toggle('active', btnPct === pct);
+    });
+  }
+
+  // 滑桿拖動
+  slider.addEventListener('input', () => {
+    const pct = parseInt(slider.value);
+    setAmountFromPercent(pct);
+  });
+
+  // 快捷按鈕
+  quickBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const pct = parseInt(btn.dataset.percent);
+      setAmountFromPercent(pct);
+    });
+  });
+
+  // 額度變更時同步滑桿
+  creditLineInput.addEventListener('input', () => {
+    syncSliderFromAmount();
+  });
+
+  // 金額手動輸入時同步滑桿
+  amountInput.addEventListener('input', () => {
+    syncSliderFromAmount();
+  });
+
+  // 初始同步
+  if (isActive && currentCreditLine > 0 && currentAmount > 0) {
+    syncSliderFromAmount();
+  }
 }
 
 function handleLiabilitySubmit(existingLiability) {
@@ -758,18 +889,34 @@ function handleLiabilitySubmit(existingLiability) {
 
   const nameVal     = document.getElementById('liability-name').value.trim();
   const categoryVal = document.getElementById('liability-category').value;
-  const amountVal   = parseFloat(document.getElementById('liability-amount').value);
   const currencyVal = document.getElementById('liability-currency').value;
-  const rateVal     = parseFloat(document.getElementById('liability-rate')?.value) || null;
+  const isRevolvingCat = categoryVal === 'pledge' || categoryVal === 'mortgage';
+  const rateVal     = parseFloat(
+    (isRevolvingCat
+      ? document.getElementById('liability-rate-rev')
+      : document.getElementById('liability-rate')
+    )?.value
+  ) || null;
   const termsVal    = parseInt(document.getElementById('liability-terms')?.value) || null;
   const startVal    = document.getElementById('liability-start')?.value || null;
   const endVal      = document.getElementById('liability-end')?.value || null;
-  const creditLineVal = parseFloat(document.getElementById('revolving-credit-line')?.value) || null;
   const drawdownVal = document.getElementById('revolving-drawdown-date')?.value || null;
+
+  // 循環型從 revolving-amount 讀取，其他從 liability-amount 讀取
+  const amountEl = isRevolvingCat
+    ? document.getElementById('revolving-amount')
+    : document.getElementById('liability-amount');
+  const amountInputVal = parseFloat(amountEl?.value);
+  // 輸入的是「萬」，儲存時轉換為實際金額
+  const amountVal = amountInputVal * 10000;
+
+  // 核准額度也是「萬」，轉換為實際金額
+  const creditLineInput = parseFloat(document.getElementById('revolving-credit-line')?.value);
+  const creditLineVal = creditLineInput > 0 ? creditLineInput * 10000 : null;
 
   let hasError = false;
   if (!nameVal) { showFieldError('liability-name-error', '請輸入負債名稱'); hasError = true; }
-  if (!validateAmount(amountVal)) { showFieldError('liability-amount-error', '金額必須為正數'); hasError = true; }
+  if (!validateAmount(amountInputVal)) { showFieldError('liability-amount-error', '金額必須為正數'); hasError = true; }
   if (hasError) return;
 
   const data = {
