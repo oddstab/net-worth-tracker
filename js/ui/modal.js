@@ -668,7 +668,7 @@ export function openLiabilityModal(liability = null) {
     + '<span id="amount-label-text">金額 (萬)</span>'
     + ' <span class="required">*</span></label>'
     + '<input class="form-input" type="number" id="liability-amount" name="amount"'
-    + ' value="' + amount + '" min="0" step="any" placeholder="例: 700" required />'
+    + ' value="' + amount + '" min="0" step="any" placeholder="例: 700"' + (isRevolving(category) ? '' : ' required') + ' />'
     + '<span class="form-error" id="liability-amount-error" style="display:none;"></span>'
     + '</div>'
     // 循環型時：年利率放在幣別旁邊
@@ -709,14 +709,16 @@ export function openLiabilityModal(liability = null) {
     + '<div id="revolving-extra"' + (isRevolving(category) ? '' : ' style="display:none"') + '>'
     + '<div class="form-row">'
     + '<div class="form-group">'
-    + '<label class="form-label" for="revolving-credit-line">核准額度 (萬)</label>'
+    + '<label class="form-label" for="revolving-credit-line">核准額度 (萬) <span class="required">*</span></label>'
     + '<input class="form-input" type="number" id="revolving-credit-line" name="creditLine"'
-    + ' value="' + creditLine + '" min="0" step="any" placeholder="例: 100" />'
+    + ' value="' + creditLine + '" min="0" step="any" placeholder="例: 100" required />'
+    + '<span class="form-error" id="revolving-credit-line-error" style="display:none;"></span>'
     + '</div>'
     + '<div class="form-group">'
-    + '<label class="form-label" for="revolving-amount">動用金額 (萬) <span class="required">*</span></label>'
+    + '<label class="form-label" for="revolving-amount">動用金額 (萬)</label>'
     + '<input class="form-input" type="number" id="revolving-amount" name="revolving-amount"'
-    + ' value="' + amount + '" min="0" step="any" />'
+    + ' value="' + (amount || 0) + '" min="0" step="any" />'
+    + '<span class="form-error" id="revolving-amount-error" style="display:none;"></span>'
     + '</div></div>'
 
     // 動用金額滑桿 + 快捷按鈕
@@ -777,6 +779,17 @@ export function openLiabilityModal(liability = null) {
     // 循環型時隱藏原本的金額欄位，顯示年利率在幣別旁邊
     if (amountGroupNormal) amountGroupNormal.style.display = isRevolving(cat) ? 'none' : '';
     if (rateGroupRevolving) rateGroupRevolving.style.display = isRevolving(cat) ? '' : 'none';
+    // 切換 required 屬性，避免隱藏欄位擋住表單提交
+    const amountInput = document.getElementById('liability-amount');
+    if (amountInput) {
+      if (isRevolving(cat)) amountInput.removeAttribute('required');
+      else amountInput.setAttribute('required', '');
+    }
+    const creditLineEl = document.getElementById('revolving-credit-line');
+    if (creditLineEl) {
+      if (isRevolving(cat)) creditLineEl.setAttribute('required', '');
+      else creditLineEl.removeAttribute('required');
+    }
     // 循環型時隱藏獨立的年利率行
     if (rateTermsRow) {
       rateTermsRow.style.display = isRevolving(cat) ? 'none' : '';
@@ -906,7 +919,7 @@ function handleLiabilitySubmit(existingLiability) {
   const amountEl = isRevolvingCat
     ? document.getElementById('revolving-amount')
     : document.getElementById('liability-amount');
-  const amountInputVal = parseFloat(amountEl?.value);
+  const amountInputVal = parseFloat(amountEl?.value) || 0;
   // 輸入的是「萬」，儲存時轉換為實際金額
   const amountVal = amountInputVal * 10000;
 
@@ -916,7 +929,20 @@ function handleLiabilitySubmit(existingLiability) {
 
   let hasError = false;
   if (!nameVal) { showFieldError('liability-name-error', '請輸入負債名稱'); hasError = true; }
-  if (!validateAmount(amountInputVal)) { showFieldError('liability-amount-error', '金額必須為正數'); hasError = true; }
+
+  if (isRevolvingCat) {
+    // 循環型：動用金額允許 0，核准額度必填
+    clearFieldError('revolving-credit-line-error');
+    clearFieldError('revolving-amount-error');
+    const drawdownAmt = parseFloat(document.getElementById('revolving-amount')?.value) || 0;
+    if (!creditLineInput || creditLineInput <= 0) {
+      showFieldError('revolving-credit-line-error', '請輸入核准額度'); hasError = true;
+    } else if (drawdownAmt > creditLineInput) {
+      showFieldError('revolving-amount-error', '動用金額不能超過核准額度'); hasError = true;
+    }
+  } else {
+    if (!validateAmount(amountInputVal)) { showFieldError('liability-amount-error', '金額必須為正數'); hasError = true; }
+  }
   if (hasError) return;
 
   const data = {

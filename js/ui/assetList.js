@@ -261,17 +261,17 @@ function renderLiabilityCategory(label, liabilities, subtotal) {
       + '<div class="liability-item-name">'
       + '<span class="liability-name">' + esc(l.name) + '</span>'
       + '</div>'
-      + '<div class="liability-item-value">' + formatTWD(twd) + '</div>'
-      + '</div>'
-      + detailHtml
-      + loanScheduleHtml
-      + '</div>'
       + '<div class="liability-item-actions">'
       + (isInstallment || isRevolving
         ? '<button class="btn-icon btn-expand" data-action="toggle-schedule" data-id="' + esc(l.id) + '" aria-label="還款明細">📊</button>'
         : '')
       + '<button class="btn-icon btn-edit" data-action="edit-liability" data-id="' + esc(l.id) + '" aria-label="編輯 ' + esc(l.name) + '">✏️</button>'
       + '<button class="btn-icon btn-delete" data-action="delete-liability" data-id="' + esc(l.id) + '" aria-label="刪除 ' + esc(l.name) + '">🗑️</button>'
+      + '</div>'
+      + '</div>'
+      + '<div class="liability-item-value">' + formatTWD(twd) + '</div>'
+      + detailHtml
+      + loanScheduleHtml
       + '</div>'
       + '</div>';
   }).join('');
