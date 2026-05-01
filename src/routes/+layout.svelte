@@ -9,6 +9,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
+  import { base } from '$app/paths';
   import '../app.css';
   import NavBar from '../components/NavBar.svelte';
   import Toast from '../components/Toast.svelte';
@@ -54,7 +55,9 @@
     if (document.body.classList.contains('modal-open')) return;
 
     const currentPath = get(page).url.pathname;
-    const idx = PAGES.indexOf(currentPath);
+    // 移除 base path 前綴來匹配 PAGES
+    const relativePath = currentPath.startsWith(base) ? currentPath.slice(base.length) || '/' : currentPath;
+    const idx = PAGES.indexOf(relativePath);
     if (idx === -1) return;
 
     let targetIdx = -1;
@@ -73,7 +76,7 @@
     // 用 opacity 淡出 → 切頁 → 淡入（不用 transform 避免破壞 fixed 定位）
     transitionClass = `slide-out-${direction}`;
     setTimeout(() => {
-      goto(PAGES[targetIdx], { replaceState: false }).then(() => {
+      goto(base + PAGES[targetIdx], { replaceState: false }).then(() => {
         transitionClass = `slide-in-${direction}`;
         setTimeout(() => {
           transitionClass = '';

@@ -7,7 +7,10 @@ const config = {
     adapter: adapter({
       // SPA fallback：所有路由都導向 index.html，由客戶端路由處理
       fallback: 'index.html'
-    })
+    }),
+    paths: {
+      base: '/net-worth-tracker'
+    }
   }
 };
 
