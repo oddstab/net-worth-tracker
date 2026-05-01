@@ -6,6 +6,7 @@
 -->
 <script>
   import { page } from '$app/stores';
+  import { base } from '$app/paths';
   import { t } from '$lib/services/i18n.js';
   import { tStore } from '$lib/services/i18n.js';
   import { theme, toggleTheme } from '$lib/stores/theme.js';
@@ -19,8 +20,9 @@
   ];
 
   function isActive(href, pathname) {
-    if (href === '/') return pathname === '/';
-    return pathname.startsWith(href);
+    const fullHref = base + href;
+    if (href === '/') return pathname === base || pathname === base + '/';
+    return pathname.startsWith(fullHref);
   }
 
   /** 當前 active tab index（用於氣泡動畫定位） */
@@ -45,7 +47,7 @@
   <div class="navbar-tabs" role="tablist">
     {#each tabs as tab}
       <a
-        href={tab.href}
+        href="{base}{tab.href}"
         class="nav-tab"
         class:active={isActive(tab.href, $page.url.pathname)}
         role="tab"
@@ -70,7 +72,7 @@
     ></div>
     {#each tabs as tab, i}
       <a
-        href={tab.href}
+        href="{base}{tab.href}"
         class="capsule-tab"
         class:active={isActive(tab.href, $page.url.pathname)}
         role="tab"
