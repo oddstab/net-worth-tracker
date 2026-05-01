@@ -29,6 +29,6 @@ export function unlockScroll() {
     lockCount = 0;
     document.body.classList.remove('modal-open');
     document.body.style.top = '';
-    window.scrollTo(0, scrollY);
+    window.scrollTo({ top: scrollY, behavior: 'instant' });
   }
 }
