@@ -5,8 +5,10 @@ import adapter from '@sveltejs/adapter-static';
 const config = {
   kit: {
     adapter: adapter({
-      // SPA fallback：所有路由都導向 index.html，由客戶端路由處理
-      fallback: 'index.html'
+      // GitHub Pages 用 404.html 作為 SPA fallback
+      fallback: '404.html',
+      pages: 'build',
+      assets: 'build'
     }),
     paths: {
       base: '/net-worth-tracker'
