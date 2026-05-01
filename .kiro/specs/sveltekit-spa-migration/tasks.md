@@ -1,0 +1,398 @@
+# Implementation Plan: SvelteKit SPA 遷移
+
+## Overview
+
+將 Net Worth Tracker 從原生 JavaScript 無框架架構遷移至 SvelteKit 框架（SPA 模式）。實作順序依照依賴關係排列：先建立專案基礎與純函式模組，再建立狀態管理與服務層，接著實作 UI 元件與頁面，最後整合 i18n、PWA 與 Google Sheets。所有程式碼使用 JavaScript。
+
+## Tasks
+
+- [x] 1. SvelteKit 專案初始化與基礎配置
+  - [x] 1.1 建立 SvelteKit 專案並配置 SPA 模式
+    - 使用 `create-svelte` 建立新專案（或手動初始化）
+    - 安裝 `@sveltejs/adapter-static` 並在 `svelte.config.js` 中配置 `fallback: 'index.html'`
+    - 建立 `src/routes/+layout.js`，設定 `export const ssr = false` 與 `export const prerender = false`
+    - 在 `src/app.html` 中設定 `lang="zh-TW"` 與相應 meta 標籤
+    - 確認 Vite 作為開發伺服器與建置工具
+    - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.6_
+  - [x] 1.2 安裝測試依賴並配置 Vitest
+    - 安裝 `vitest`、`fast-check`、`@vitest/coverage-v8`、`jsdom`
+    - 建立 `vitest.config.js`，配置 `jsdom` 環境、`sveltekit()` plugin、測試 include 路徑
+    - 在 `package.json` 中設定 `test`、`test:watch`、`coverage` 腳本
+    - _Requirements: 1.5, 19.1, 19.2_
+  - [x] 1.3 建立專案目錄結構
+    - 建立 `src/lib/stores/`、`src/lib/services/`、`src/lib/price/`、`src/lib/utils/`、`src/lib/i18n/`、`src/components/`、`tests/` 目錄
+    - 將現有 `css/style.css` 遷移至 `src/app.css`，保留所有 CSS 自訂屬性
+    - 將 `icons/`、`manifest.json` 遷移至 `static/` 目錄
+    - _Requirements: 1.1, 14.1_
+
+- [x] 2. 純函式計算模組（Calculator）
+  - [x] 2.1 實作 Calculator 核心計算函式
+    - 建立 `src/lib/utils/calculator.js`
+    - 實作 `calculateAssetTWD(quantity, pricePerUnit, currency, exchangeRate)` — 資產 TWD 值計算
+    - 實作 `calculateTotals(assets, liabilities, exchangeRate)` — 淨資產、投資總額、流動資產、各類負債小計
+    - 實作 `calculateGrowthRates(snapshots)` — 真實月增率（30 天前 ±3 天容差）與今日漲跌幅（前一日 ±3 天容差）
+    - 實作 `calculatePieChartData(totals)` — 圓餅圖標籤、金額與百分比
+    - 實作驗證函式：`validateQuantity`、`validatePrice`、`validateAmount`、`validateExchangeRate`
+    - 從現有 `js/calculator.js` 遷移邏輯，確保公式一致
+    - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 9.4, 9.5, 9.6, 10.4_
+  - [x] 2.2 實作貸款攤還計算函式
+    - 在 `src/lib/utils/calculator.js` 中新增 `calculateLoanSchedule(principal, annualRate, terms)` — 等額本息攤還
+    - 新增 `calculateEqualPrincipalSchedule(principal, annualRate, terms)` — 本金平均攤還
+    - 最後一期調整還款金額確保餘額歸零
+    - 每期回傳 `{ period, principalPart, interestPart, monthlyPayment, remainingBalance, cumulativeInterest }`
+    - _Requirements: 16.1, 16.2, 16.3_
+  - [x] 2.3 撰寫 Calculator 屬性測試
+    - **Property 3: 淨資產不變量** — 驗證 `netWorth === totalAssets - totalLiabilities`
+    - **Validates: Requirements 15.4, 15.7**
+  - [x] 2.4 撰寫 TWD 轉換屬性測試
+    - **Property 4: TWD 轉換正數不變量** — 正數 quantity × pricePerUnit × exchangeRate 結果為正數
+    - **Validates: Requirements 15.2, 15.8**
+  - [x] 2.5 撰寫貸款還本加總屬性測試
+    - **Property 5: 貸款還本加總等於本金** — 所有期數 principalPart 加總等於原始本金
+    - **Validates: Requirements 16.1, 16.2, 16.4**
+  - [x] 2.6 撰寫貸款最終餘額屬性測試
+    - **Property 6: 貸款最終餘額為零** — 最後一期 remainingBalance 為零
+    - **Validates: Requirements 16.3, 16.5**
+  - [x] 2.7 撰寫輸入驗證屬性測試
+    - **Property 18: 輸入驗證函式正確性** — 有限正數回傳 true，非正數回傳 false
+    - **Validates: Requirements 15.5**
+  - [x] 2.8 撰寫圓餅圖百分比屬性測試
+    - **Property 19: 圓餅圖百分比加總** — 百分比加總約等於 100%（容差 0.1%）
+    - **Validates: Requirements 15.6**
+
+- [x] 3. Checkpoint - 確認 Calculator 模組測試通過
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 4. Storage Service 與資料持久化
+  - [x] 4.1 實作 Storage Service
+    - 建立 `src/lib/services/storage.js`
+    - 使用 `nwt_` 前綴的 localStorage key（`nwt_assets`、`nwt_liabilities`、`nwt_exchange_rate`、`nwt_snapshots`）
+    - 實作 `loadAssets`、`saveAssets`、`loadLiabilities`、`saveLiabilities`、`loadExchangeRate`、`saveExchangeRate`、`loadSnapshots`、`saveSnapshots`
+    - 實作 JSON 序列化/反序列化封裝，`JSON.parse` 失敗時回傳預設值
+    - 實作 `exportData()` — 將所有資料序列化為 JSON 字串
+    - 實作 `importData(jsonString)` — 驗證必要欄位（`assets`、`liabilities`、`exchangeRate`、`snapshots`）後載入
+    - localStorage 寫入失敗時拋出包含 key 名稱的描述性錯誤
+    - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 20.1_
+  - [x] 4.2 撰寫 Storage 屬性測試
+    - **Property 1: 資料匯出/匯入 Round-Trip** — exportData 後 importData 產生等價物件
+    - **Validates: Requirements 4.7, 4.2, 4.4**
+  - [x] 4.3 撰寫匯入驗證屬性測試
+    - **Property 2: 匯入驗證拒絕缺失欄位** — 移除任一必要欄位後 importData 拋出包含欄位名稱的錯誤
+    - **Validates: Requirements 4.5, 4.6**
+
+- [x] 5. Svelte Stores 狀態管理
+  - [x] 5.1 實作資產與負債 writable stores
+    - 建立 `src/lib/stores/assets.js` — `createAssetStore()` 提供 `addAsset`、`updateAsset`、`removeAsset`、`replaceAll`
+    - 建立 `src/lib/stores/liabilities.js` — `createLiabilityStore()` 提供 `addLiability`、`updateLiability`、`removeLiability`、`replaceAll`
+    - 每次操作後自動呼叫 Storage Service 持久化
+    - 啟動時從 Storage Service 載入初始資料
+    - _Requirements: 3.1, 3.2, 3.3, 3.4_
+  - [x] 5.2 實作匯率與快照 stores
+    - 建立 `src/lib/stores/exchangeRate.js` — writable store，提供 `setExchangeRate`
+    - 建立 `src/lib/stores/snapshots.js` — writable store，提供快照 CRUD
+    - 每次操作後自動持久化至 localStorage
+    - _Requirements: 3.1, 3.2, 3.3, 3.4_
+  - [x] 5.3 實作 derived stores
+    - 建立 `src/lib/stores/derived.js`
+    - `totals` — derived from [assets, liabilities, exchangeRate]，呼叫 `calculateTotals`
+    - `growthRates` — derived from snapshots，呼叫 `calculateGrowthRates`
+    - `pieChartData` — derived from totals，呼叫 `calculatePieChartData`
+    - _Requirements: 3.6, 15.3, 15.4, 15.6_
+
+- [x] 6. Snapshot Manager
+  - [x] 6.1 實作 Snapshot Manager 模組
+    - 建立 `src/lib/services/snapshotManager.js`
+    - 實作 `autoSnapshot(snapshots, netWorth)` — 建立或更新當日快照，限制 365 天上限
+    - 實作 `filterSnapshotsByRange(snapshots, range)` — 依時間範圍篩選（1w/1m/6m/1y/all）
+    - 當日已有快照時覆蓋而非新增
+    - 在 asset/liability store 變更後自動觸發快照更新
+    - _Requirements: 9.1, 9.2, 9.3, 9.7, 3.5_
+  - [x] 6.2 撰寫快照冪等性屬性測試
+    - **Property 7: 快照冪等性** — 同一天重複呼叫 autoSnapshot 不增加快照數量
+    - **Validates: Requirements 9.2, 19.5**
+  - [x] 6.3 撰寫快照數量上限屬性測試
+    - **Property 8: 快照數量上限** — 超過 365 筆的快照陣列呼叫 autoSnapshot 後長度不超過 365
+    - **Validates: Requirements 9.3**
+  - [x] 6.4 撰寫快照時間範圍篩選屬性測試
+    - **Property 9: 快照時間範圍篩選** — 篩選後所有快照日期在指定範圍截止日期之後
+    - **Validates: Requirements 9.7**
+
+- [x] 7. Checkpoint - 確認核心模組與 stores 測試通過
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 8. Price Provider 抽象介面架構
+  - [x] 8.1 定義 Price Provider Interface 與 Registry
+    - 建立 `src/lib/price/interface.js` — `PriceProviderInterface` 抽象類別，定義 `fetchPrices`、`getProviderType`、`getName`、`isAvailable`
+    - 建立 `src/lib/price/registry.js` — `PriceProviderRegistry`，提供 `register`、`getProviderByType`、`getAllProviders`
+    - 註冊時驗證 Provider 實作所有必要方法，缺少時拋出包含方法名稱的錯誤
+    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7_
+  - [x] 8.2 實作 TWSE Price Provider
+    - 建立 `src/lib/price/twseProvider.js` — 繼承 `PriceProviderInterface`
+    - `getProviderType()` 回傳 `'tw_stock'`
+    - `fetchPrices(symbols)` 從 `mis.twse.com.tw` 抓取價格，依序嘗試 tse/otc 市場
+    - `isAvailable()` 測試 API 連線
+    - _Requirements: 8.8, 8.9_
+  - [x] 8.3 實作 CoinGecko Price Provider
+    - 建立 `src/lib/price/coinGeckoProvider.js` — 繼承 `PriceProviderInterface`
+    - `getProviderType()` 回傳 `'crypto'`
+    - `fetchPrices(symbols)` 從 `api.coingecko.com` 批次抓取 TWD 價格
+    - 內建 20 種主流幣種的 symbol → coinId 對照表
+    - _Requirements: 8.10, 8.11_
+  - [x] 8.4 實作 Price Fetcher 協調層
+    - 建立 `src/lib/price/priceFetcher.js`
+    - 透過 Registry 取得對應 Provider（不直接耦合具體實作）
+    - 依 type 分組並去重，避免重複 API 呼叫
+    - 實作指數退避機制：前 3 次不退避，之後 2^n 遞增，最大 5 分鐘
+    - 回傳更新後的資產陣列（含 pricePerUnit、priceSource、lastPriceUpdate）
+    - _Requirements: 8.12, 8.13, 8.14, 8.19, 8.20_
+  - [x] 8.5 註冊 Providers 並設定自動更新
+    - 在應用程式初始化時註冊 TWSE 與 CoinGecko Provider
+    - 設定每 1 分鐘自動更新價格、每 10 分鐘強制更新
+    - 價格更新成功後顯示 Toast 通知
+    - _Requirements: 8.15, 8.16_
+  - [x] 8.6 撰寫 Provider Registry 合約驗證屬性測試
+    - **Property 10: Provider Registry 合約驗證** — 缺少任一必要方法時 register() 拋出包含方法名稱的錯誤
+    - **Validates: Requirements 8.7**
+  - [x] 8.7 撰寫 Price Fetcher 去重屬性測試
+    - **Property 11: Price Fetcher 去重** — 相同 symbol+type 的重複資產只呼叫一次 fetchPrices
+    - **Validates: Requirements 8.13**
+  - [x] 8.8 撰寫 Price Fetcher 多型路由屬性測試
+    - **Property 12: Price Fetcher 多型路由** — 根據資產 type 路由至對應 Provider
+    - **Validates: Requirements 8.12, 8.19, 8.20**
+
+- [x] 9. Search Service
+  - [x] 9.1 實作搜尋服務
+    - 建立 `src/lib/services/searchService.js`
+    - 實作台股搜尋：精確代號匹配 → 代號前綴匹配 → 名稱包含匹配，最多 10 筆
+    - 實作加密貨幣搜尋：從預定義 20 種主流幣種中搜尋
+    - 使用 TWSE openapi `STOCK_DAY_ALL` 端點作為全市場股價快取，快取有效期 1 分鐘
+    - CORS 阻擋時自動透過 `corsproxy.io` 代理重試
+    - 實作股票/加密貨幣詳細資訊查詢（即時價格、漲跌幅、高低、成交量、基本資料）
+    - _Requirements: 17.1, 17.2, 8.17, 8.18_
+
+- [x] 10. Checkpoint - 確認服務層模組測試通過
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 11. I18n 國際化系統
+  - [x] 11.1 實作 I18n Service 核心
+    - 建立 `src/lib/services/i18n.js`
+    - 建立 `src/lib/stores/locale.js` — writable store，初始值從 localStorage `nwt_locale` 讀取，預設 `zh-TW`
+    - 實作 `t(key, params)` 翻譯函式，支援巢狀 key（如 `nav.dashboard`）與 `{param}` 插值
+    - 實作回退機制：當前語言找不到 → zh-TW → 回傳 key 本身
+    - 語言切換時持久化至 localStorage 並更新 `<html lang>` 屬性
+    - 建立 `tStore` derived store 供 Svelte 模板使用
+    - _Requirements: 22.1, 22.2, 22.3, 22.6, 22.7, 22.8, 22.9, 22.11, 22.12, 22.13, 22.14_
+  - [x] 11.2 建立五種語言翻譯檔案
+    - 建立 `src/lib/i18n/zh-TW.json` — 繁體中文（預設語言，完整翻譯）
+    - 建立 `src/lib/i18n/zh-CN.json` — 簡體中文（獨立撰寫，使用大陸慣用詞彙，非自動簡繁轉換）
+    - 建立 `src/lib/i18n/ja.json` — 日文翻譯
+    - 建立 `src/lib/i18n/en.json` — 英文翻譯
+    - 建立 `src/lib/i18n/ko.json` — 韓文翻譯
+    - 涵蓋所有使用者可見字串：頁面標題、導覽列、按鈕、表單標籤、錯誤訊息、Toast、確認對話框、提示文字
+    - _Requirements: 22.4, 22.5, 22.10, 22.11, 22.12, 22.13_
+  - [x] 11.3 實作 Locale Formatter
+    - 建立 `src/lib/services/localeFormatter.js`
+    - 實作 `formatCurrency(amount, currency)` — 使用 `Intl.NumberFormat` 根據當前 Locale 格式化
+    - 實作 `formatPercent(value)` — 使用 `Intl.NumberFormat` 格式化百分比
+    - 實作 `formatDate(dateStr)` — 使用 `Intl.DateTimeFormat` 格式化日期
+    - 語言切換時立即以新 Locale 重新格式化
+    - _Requirements: 22.15, 22.16, 22.17, 22.18_
+  - [x] 11.4 撰寫翻譯完整性屬性測試
+    - **Property 13: 翻譯完整性不變量** — 所有語言的 Translation_File 包含與 zh-TW 相同的所有翻譯鍵
+    - **Validates: Requirements 22.5, 22.19**
+  - [x] 11.5 撰寫翻譯插值參數一致性屬性測試
+    - **Property 14: 翻譯插值參數一致性** — 每種語言保留相同的 `{param}` 佔位符
+    - **Validates: Requirements 22.20**
+  - [x] 11.6 撰寫語言切換 Round-Trip 屬性測試
+    - **Property 15: 語言切換 Round-Trip** — 從語言 A 切換至 B 再切回 A，t(key) 回傳相同字串
+    - **Validates: Requirements 22.21**
+  - [x] 11.7 撰寫語言持久化 Round-Trip 屬性測試
+    - **Property 16: 語言持久化 Round-Trip** — 設定語言後儲存至 localStorage，重新初始化後語言一致
+    - **Validates: Requirements 22.12, 22.13**
+  - [x] 11.8 撰寫翻譯回退機制屬性測試
+    - **Property 17: 翻譯回退機制** — 非預設語言中不存在的 key 回傳 zh-TW 的翻譯值
+    - **Validates: Requirements 22.8**
+
+- [x] 12. Checkpoint - 確認 I18n 模組測試通過
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 13. 共用佈局與導覽元件
+  - [x] 13.1 實作共用 Layout 與導覽列
+    - 建立 `src/routes/+layout.svelte` — 包含 NavBar、FAB、Modal 容器、Toast 通知
+    - 建立 `src/components/NavBar.svelte` — 固定頂部導覽列，三個頁籤（儀表板、資產、設定）
+    - 使用 `$page.url.pathname` 高亮當前頁籤
+    - 頁籤切換使用 SvelteKit 客戶端路由，不重新載入整頁
+    - 所有文字使用 `t()` 翻譯函式
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
+  - [x] 13.2 實作 Toast 通知元件
+    - 建立 `src/components/Toast.svelte` — 全域 Toast，支援 success/error 樣式
+    - 顯示後 2.5 秒自動隱藏
+    - 提供全域 `showToast(message, type)` 函式供各模組呼叫
+    - _Requirements: 18.1, 18.2, 18.3_
+  - [x] 13.3 實作 FAB 浮動操作按鈕
+    - 建立 `src/components/FAB.svelte` — 浮動按鈕，用於快速新增資產或負債
+    - 最小觸控目標 44px
+    - _Requirements: 14.6_
+  - [x] 13.4 實作確認對話框元件
+    - 建立 `src/components/ConfirmDialog.svelte` — 自訂確認對話框（取代瀏覽器原生 confirm）
+    - _Requirements: 6.9_
+
+- [x] 14. 儀表板頁面
+  - [x] 14.1 實作快速數字卡片元件
+    - 建立 `src/components/dashboard/QuickStats.svelte`
+    - 顯示四格卡片：資產月增率、投資總額、淨資產、債務
+    - 月增率正值綠色 + `+` 前綴，負值紅色
+    - 使用 `formatCurrency` 與 `formatPercent` 格式化數字
+    - 手機 2×2 網格，平板/桌面 4 欄
+    - _Requirements: 5.1, 5.2, 5.3, 14.2, 14.3_
+  - [x] 14.2 實作圓餅圖元件
+    - 建立 `src/components/dashboard/PieChart.svelte`
+    - 安裝 Chart.js 4.x（npm 套件）
+    - 使用 Chart.js 渲染 Doughnut 圓餅圖，顯示投資資產與債務比例
+    - 圓餅圖中央顯示淨資產金額與今日漲跌幅百分比
+    - 旁邊顯示詳細圖例（明細項目、金額、百分比）
+    - _Requirements: 5.4, 5.5, 5.6_
+  - [x] 14.3 實作趨勢折線圖元件
+    - 建立 `src/components/dashboard/TrendChart.svelte`
+    - 使用 Chart.js 渲染淨資產趨勢折線圖
+    - 提供時間範圍篩選器（1週、1月、6月、1年、全部）
+    - 無快照資料時顯示「尚無資料」提示
+    - _Requirements: 5.7, 5.8, 5.9_
+  - [x] 14.4 組裝儀表板頁面
+    - 建立 `src/routes/+page.svelte`
+    - 組合 QuickStats、PieChart、TrendChart 元件
+    - 訂閱 derived stores（totals、growthRates、pieChartData、snapshots）
+    - 桌面雙欄網格佈局，平板左右並排，手機單欄
+    - _Requirements: 5.1-5.9, 14.2, 14.3, 14.4_
+
+- [x] 15. 資產管理頁面
+  - [x] 15.1 實作搜尋下拉與摘要面板元件
+    - 建立 `src/components/modals/SearchDropdown.svelte` — 搜尋下拉選單，200ms 防抖
+    - 建立 `src/components/modals/SummaryPanel.svelte` — 股票/加密貨幣摘要面板
+    - 支援鍵盤導覽（↑↓ 選擇、Enter 確認、Escape 關閉）
+    - 台股摘要：即時價格、漲跌幅、近一月漲幅、今日高低、成交量、ETF/公司基本資料
+    - 加密貨幣摘要：TWD/USD 價格、24h 漲跌幅、市值、幣種簡介
+    - _Requirements: 6.4, 6.5, 6.6, 17.1, 17.2, 17.3, 17.4, 17.5_
+  - [x] 15.2 實作新增/編輯資產 Modal
+    - 建立 `src/components/modals/AssetModal.svelte`
+    - 表單欄位：類型（tw_stock/crypto/cash/other）、分類（investment/liquid）、代號/搜尋、名稱、數量、幣別（TWD/USD）、每單位價格
+    - 整合 SearchDropdown 與 SummaryPanel
+    - 選擇搜尋結果後自動帶入代號、名稱，摘要面板載入即時價格後自動套用至價格欄位
+    - 手機底部滑入動畫，桌面居中顯示
+    - _Requirements: 6.1, 6.2, 6.3, 6.5, 6.7, 14.7_
+  - [x] 15.3 實作資產清單元件
+    - 建立 `src/components/assets/AssetList.svelte` — 按分類分組顯示，每組顯示小計
+    - 建立 `src/components/assets/AssetItem.svelte` — 單一資產項目
+    - 相同股票代號的多筆持股整合顯示，提供展開/收合明細
+    - 刪除時顯示自訂確認對話框
+    - _Requirements: 6.8, 6.9, 6.10_
+  - [x] 15.4 實作負債管理元件
+    - 建立 `src/components/modals/LiabilityModal.svelte` — 根據負債分類動態顯示表單欄位
+    - 信貸/房貸：金額、年利率、期數、起始/結束日期
+    - 質押/理財型房貸：核准額度、動用金額滑桿、年利率、動用日期
+    - 建立 `src/components/assets/LiabilityList.svelte` — 負債清單
+    - 建立 `src/components/assets/LiabilityItem.svelte` — 單一負債項目，含展開/收合還款明細表
+    - 提供攤還方式切換按鈕（等額本息 / 本金平均攤還）
+    - 循環型負債顯示計息天數計算器
+    - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7, 7.8_
+  - [x] 15.5 組裝資產清單頁面
+    - 建立 `src/routes/assets/+page.svelte`
+    - 組合 AssetList、LiabilityList 元件
+    - 訂閱 assets、liabilities stores
+    - _Requirements: 6.1-6.10, 7.1-7.8_
+
+- [x] 16. 設定頁面
+  - [x] 16.1 實作匯率設定區塊
+    - 建立 `src/components/settings/ExchangeRateSection.svelte`
+    - USD/TWD 匯率輸入欄位，預設值 31.5
+    - 輸入非正數時顯示「匯率必須為正數」錯誤
+    - 儲存後更新 exchangeRate store 並重新計算所有 USD 資產價值
+    - 顯示 Toast 通知「匯率已更新」
+    - _Requirements: 10.1, 10.2, 10.3_
+  - [x] 16.2 實作資料匯出/匯入區塊
+    - 建立 `src/components/settings/DataManagement.svelte`
+    - 匯出：序列化為 JSON 並觸發下載，檔名 `net-worth-tracker-YYYY-MM-DD.json`
+    - 匯入：選擇 JSON 檔案，驗證並載入，覆蓋現有資料
+    - 匯入成功顯示 Toast「資料已匯入」並重新渲染
+    - 匯入失敗顯示具體錯誤訊息
+    - _Requirements: 11.1, 11.2, 11.3, 11.4_
+  - [x] 16.3 實作診斷工具區塊
+    - 建立 `src/components/settings/DiagnosticTools.svelte`
+    - 「清除快取」按鈕：清除股價快取並強制重新載入
+    - 「手動更新股價」按鈕：立即執行一次價格更新
+    - 更新進行中按鈕停用並顯示「更新中...」
+    - _Requirements: 21.1, 21.2, 21.3_
+  - [x] 16.4 實作語言選擇器
+    - 建立 `src/components/settings/LanguageSelector.svelte`
+    - 列出五種語言原生名稱：繁體中文、简体中文、日本語、English、한국어
+    - 選擇後立即切換語言並重新渲染所有 UI 字串，無需重新載入
+    - _Requirements: 22.10, 22.11_
+  - [x] 16.5 組裝設定頁面
+    - 建立 `src/routes/settings/+page.svelte`
+    - 組合 ExchangeRateSection、DataManagement、DiagnosticTools、LanguageSelector、GoogleIntegration 元件
+    - _Requirements: 10.1-10.3, 11.1-11.4, 21.1-21.3, 22.10-22.11_
+
+- [x] 17. Checkpoint - 確認所有頁面元件正確渲染
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [x] 18. 響應式佈局與深色主題
+  - [x] 18.1 實作全域 CSS 與響應式佈局
+    - 在 `src/app.css` 中定義深色主題 CSS 自訂屬性（背景色、文字色、強調色等）
+    - 手機（< 768px）：單欄佈局，快速數字卡片 2×2 網格
+    - 平板（≥ 768px）：快速數字卡片 4 欄，圓餅圖左右並排
+    - 桌面（≥ 1024px）：儀表板雙欄網格佈局
+    - 所有互動元素最小觸控目標 44px
+    - 支援 `prefers-reduced-motion` 媒體查詢，停用動畫效果
+    - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.8_
+
+- [x] 19. Google Sheets 整合
+  - [x] 19.1 實作 Google Sheets Service
+    - 建立 `src/lib/services/googleSheets.js`
+    - 提供 Google API 金鑰與 OAuth 客戶端 ID 設定介面
+    - 支援 Google 帳戶登入/登出
+    - 實作「同步到 Google Sheets」、「從 Google Sheets 載入」、「創建新表格」三個操作
+    - 在 Google Sheets 中建立「資產清單」與「歷史記錄」兩個工作表
+    - _Requirements: 12.1, 12.2, 12.3, 12.4_
+  - [x] 19.2 實作 Google 整合 UI 元件
+    - 建立 `src/components/settings/GoogleIntegration.svelte`
+    - 顯示登入狀態、使用者資訊與操作按鈕
+    - _Requirements: 12.5_
+
+- [x] 20. PWA 與 Service Worker
+  - [x] 20.1 配置 PWA manifest 與 Service Worker
+    - 更新 `static/manifest.json`：`display: standalone`、`lang: zh-TW`、深色主題色
+    - 建立/更新 `static/sw.js`：
+      - App shell 資源使用 Cache First 策略
+      - 外部 API（TWSE、CoinGecko）使用 Network First 策略
+      - 啟用時清除舊版本快取
+    - 在 `+layout.svelte` 中註冊 Service Worker
+    - 新版本可用時顯示更新提示
+    - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5_
+
+- [x] 21. 現有資料相容性驗證
+  - [x] 21.1 驗證現有 localStorage 資料相容性
+    - 確認使用相同的 localStorage key（`nwt_assets`、`nwt_liabilities`、`nwt_exchange_rate`、`nwt_snapshots`）
+    - 驗證能正確解析現有 Asset 資料結構（id、name、symbol、category、type、quantity、currency、pricePerUnit、priceSource、lastPriceUpdate）
+    - 驗證能正確解析現有 Liability 資料結構（id、name、category、amount、currency、interestRate、terms、startDate、endDate、creditLine、drawdownDate）
+    - 驗證能正確解析現有 Snapshot 資料結構（date、netWorth）
+    - 首次啟動且 localStorage 已有資料時正確載入並顯示
+    - _Requirements: 20.1, 20.2, 20.3, 20.4, 20.5_
+  - [x] 21.2 撰寫現有資料相容性整合測試
+    - 使用現有格式的 mock 資料驗證新應用程式能正確載入
+    - 驗證 Store → Storage 持久化後 localStorage 包含正確資料
+    - _Requirements: 20.1-20.5_
+
+- [x] 22. Final checkpoint - 確認所有測試通過並完成整合
+  - Ensure all tests pass, ask the user if questions arise.
+
+## Notes
+
+- Tasks marked with `*` are optional and can be skipped for faster MVP
+- Each task references specific requirements for traceability
+- Checkpoints ensure incremental validation at key milestones
+- Property tests validate universal correctness properties from the design document (Properties 1-19)
+- Unit tests validate specific examples and edge cases
+- The implementation uses JavaScript throughout, consistent with the SvelteKit design
+- All UI strings must use the `t()` translation function for i18n support
+- CSS custom properties from the existing `style.css` are preserved in `src/app.css`
+- localStorage keys maintain backward compatibility with the existing app (`nwt_` prefix)

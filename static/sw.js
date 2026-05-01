@@ -1,67 +1,44 @@
 /**
- * Service Worker — Net Worth Tracker
+ * Service Worker — Net Worth Tracker (SvelteKit SPA)
  *
  * Cache Strategy:
- *  - App Shell (local assets + Chart.js CDN): Cache First
+ *  - App Shell (local assets): Cache First
  *  - API requests (TWSE, CoinGecko): Network First (no cache on failure)
+ *
+ * 從原有 sw.js 遷移至 SvelteKit 架構。
+ * SvelteKit 建置後的靜態檔案路徑與原有不同，
+ * 因此 App Shell 清單改為動態快取（不預快取具體路徑）。
  */
 
-const CACHE_NAME = 'nwt-app-shell-v3';
-
-/** App Shell assets to pre-cache on install */
-const APP_SHELL = [
-  '/',
-  '/index.html',
-  '/css/style.css',
-  '/js/app.js',
-  '/js/state.js',
-  '/js/storage.js',
-  '/js/priceFetcher.js',
-  '/js/snapshotManager.js',
-  '/js/calculator.js',
-  '/js/ui/dashboard.js',
-  '/js/ui/assetList.js',
-  '/js/ui/trendChart.js',
-  '/js/ui/modal.js',
-  '/js/ui/settings.js',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
-];
+const CACHE_NAME = 'nwt-app-shell-v5';
 
 /** URL patterns that should use Network First strategy */
 const NETWORK_FIRST_PATTERNS = [
   'mis.twse.com.tw',
   'api.coingecko.com',
+  'openapi.twse.com.tw',
+  'corsproxy.io',
 ];
 
-// ── Install: pre-cache App Shell ──────────────────────────────
+// ── Install: activate immediately for new installs ────────────────────────
 self.addEventListener('install', (event) => {
+  // 不預快取具體路徑，改為在 fetch 時動態快取
+  // SvelteKit 建置後的檔案帶有 hash，無法預先列舉
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      // Cache what we can; ignore individual failures so install succeeds
-      return Promise.allSettled(
-        APP_SHELL.map((url) =>
-          cache.add(url).catch((err) => {
-            console.warn('[SW] Failed to cache:', url, err);
-          })
-        )
-      );
+    caches.open(CACHE_NAME).then(() => {
+      console.log('[SW] Cache opened:', CACHE_NAME);
     })
-    // Do NOT call skipWaiting() here — let the app control when to activate
-    // the new SW so users don't lose in-progress work due to a page reload.
   );
 });
 
-// ── Message: allow the app to trigger skipWaiting on demand ───
+// ── Message: allow the app to trigger skipWaiting on demand ───────────────
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 });
 
-// ── Activate: clean up old caches ────────────────────────────
+// ── Activate: clean up old caches ────────────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -77,7 +54,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// ── Fetch: route requests to appropriate strategy ─────────────
+// ── Fetch: route requests to appropriate strategy ─────────────────────────
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -91,7 +68,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache First for App Shell assets
+  // Network First for navigation (HTML pages) — prevents stale cache
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  // Cache First for static assets (JS/CSS/images with hashes)
   event.respondWith(cacheFirst(request));
 });
 
@@ -117,7 +100,7 @@ async function cacheFirst(request) {
     console.warn('[SW] Cache First fetch failed:', request.url, err);
     // Return a basic offline fallback for navigation requests
     if (request.mode === 'navigate') {
-      const fallback = await caches.match('/index.html');
+      const fallback = await caches.match('/index.html') || await caches.match('/');
       if (fallback) return fallback;
     }
     throw err;
@@ -127,7 +110,7 @@ async function cacheFirst(request) {
 /**
  * Network First strategy:
  * 1. Try network → return if successful
- * 2. On failure → do NOT fall back to cache (API data must be fresh)
+ * 2. On failure → return synthetic error response (API data must be fresh)
  */
 async function networkFirst(request) {
   try {

@@ -23,7 +23,7 @@ const CRYPTO_ID_MAP = {
 
 /** @type {Map<string, { failures: number, nextRetry: number }>} */
 const backoffState = new Map();
-const MAX_BACKOFF_MS = 10 * 60 * 1000; // 最大退避 10 分鐘
+const MAX_BACKOFF_MS = 5 * 60 * 1000; // 最大退避 5 分鐘
 
 function canRetry(key) {
   const s = backoffState.get(key);
@@ -38,8 +38,13 @@ function recordSuccess(key) {
 function recordFailure(key) {
   const s = backoffState.get(key) || { failures: 0, nextRetry: 0 };
   s.failures++;
-  const delay = Math.min(1000 * Math.pow(2, s.failures), MAX_BACKOFF_MS);
-  s.nextRetry = Date.now() + delay;
+  // 前 3 次失敗不退避，之後才開始指數退避
+  if (s.failures <= 3) {
+    s.nextRetry = 0;
+  } else {
+    const delay = Math.min(1000 * Math.pow(2, s.failures - 3), MAX_BACKOFF_MS);
+    s.nextRetry = Date.now() + delay;
+  }
   backoffState.set(key, s);
 }
 
@@ -66,9 +71,11 @@ export async function fetchTWStockPrice(symbol) {
       const stockInfo = data?.msgArray?.[0];
       if (!stockInfo) continue;
 
-      let price = stockInfo.z;
-      if (!price || price === '-') price = stockInfo.y;
-      if (!price || price === '-') price = stockInfo.o;
+      let price = stockInfo.z; // 最新成交價
+      if (!price || price === '-') price = stockInfo.y; // 昨收價
+      if (!price || price === '-') price = stockInfo.o; // 開盤價
+      if (!price || price === '-') price = stockInfo.b; // 最佳買價
+      if (!price || price === '-') price = stockInfo.a; // 最佳賣價
 
       if (price && price !== '-') {
         const parsed = parseFloat(price);

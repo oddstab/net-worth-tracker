@@ -110,8 +110,8 @@ async function initPriceFetcher() {
 
   await doFetch(true);
 
-  // 每 2 分鐘自動更新
-  startPriceAutoRefresh(() => doFetch(false), 120000);
+  // 每 1 分鐘自動更新
+  startPriceAutoRefresh(() => doFetch(false), 60000);
   // 每 10 分鐘強制更新
   setInterval(() => doFetch(true), 600000);
   
@@ -130,13 +130,42 @@ function registerServiceWorker() {
         const nw = reg.installing;
         if (nw) {
           nw.addEventListener('statechange', () => {
-            if (nw.state === 'activated') window.location.reload();
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              // 新版本已下載但尚未啟用，顯示更新提示讓使用者決定
+              showUpdateToast(nw);
+            }
           });
         }
       });
       reg.update();
     }).catch(() => {});
+
+    // 當新 SW 接管後才刷新（使用者主動觸發）
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
   }
+}
+
+function showUpdateToast(worker) {
+  const toast = document.getElementById('toast');
+  if (!toast) return;
+
+  toast.innerHTML = '有新版本可用 '
+    + '<button id="update-btn" style="margin-left:8px;padding:2px 10px;'
+    + 'border:1px solid #fff;border-radius:4px;background:transparent;'
+    + 'color:#fff;cursor:pointer;font-size:inherit;">更新</button>';
+  toast.className = 'toast info';
+  toast.classList.remove('hidden');
+
+  document.getElementById('update-btn')?.addEventListener('click', () => {
+    worker.postMessage({ type: 'SKIP_WAITING' });
+    toast.classList.add('hidden');
+  });
 }
 
 // ─── 應用程式初始化 ──────────────────────────────────────────────────────────

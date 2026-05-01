@@ -1,6 +1,10 @@
 # Dependencies
 node_modules/
 
+# SvelteKit 建置產物
+.svelte-kit/
+build/
+
 # Test coverage
 coverage/
 

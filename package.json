@@ -4,16 +4,31 @@
   "description": "個人資產追蹤器 — 純前端 PWA，管理資產與負債，統一以新台幣顯示淨資產",
   "type": "module",
   "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
     "test": "vitest --run",
     "test:watch": "vitest",
     "coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@sveltejs/adapter-static": "^3.0.8",
+    "@sveltejs/kit": "^2.15.0",
+    "@sveltejs/vite-plugin-svelte": "^3.1.2",
     "@vitest/coverage-v8": "^1.6.0",
     "fast-check": "^3.19.0",
     "jsdom": "^24.1.0",
+    "svelte": "^4.2.19",
+    "vite": "^5.4.21",
     "vitest": "^1.6.0"
   },
-  "keywords": ["pwa", "finance", "asset-tracker"],
-  "license": "MIT"
+  "keywords": [
+    "pwa",
+    "finance",
+    "asset-tracker"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "chart.js": "^4.5.1"
+  }
 }
