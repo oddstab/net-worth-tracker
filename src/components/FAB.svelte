@@ -10,6 +10,7 @@
   import { tStore } from '$lib/services/i18n.js';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
+  import { base } from '$app/paths';
   import { requestAddAsset, requestAddLiability } from '$lib/stores/modalState.js';
   import Icon from './Icon.svelte';
 
@@ -31,8 +32,9 @@
   function handleAddAsset() {
     closeMenu();
     requestAddAsset();
-    if ($page.url.pathname !== '/assets') {
-      goto('/assets');
+    const assetsPath = base + '/assets';
+    if ($page.url.pathname !== assetsPath) {
+      goto(assetsPath);
     }
   }
 
@@ -40,8 +42,9 @@
   function handleAddLiability() {
     closeMenu();
     requestAddLiability();
-    if ($page.url.pathname !== '/assets') {
-      goto('/assets');
+    const assetsPath = base + '/assets';
+    if ($page.url.pathname !== assetsPath) {
+      goto(assetsPath);
     }
   }
 
