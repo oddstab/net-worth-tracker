@@ -97,7 +97,10 @@
     showConfirmDialog(
       t('confirm.deleteTitle'),
       t('confirm.deleteAsset', { name: displayName }),
-      () => { assets.removeAsset(holding.id); }
+      () => {
+        assets.removeAsset(holding.id);
+        showToast(`${displayName} ${t('common.delete')}`, 'success');
+      }
     );
   }
 

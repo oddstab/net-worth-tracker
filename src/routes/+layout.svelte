@@ -140,7 +140,7 @@
     }
 
     try {
-      const registration = await navigator.serviceWorker.register('/sw.js');
+      const registration = await navigator.serviceWorker.register(`${base}/sw.js`);
 
       // 監聽新 SW 安裝完成（waiting 狀態）
       registration.addEventListener('updatefound', () => {

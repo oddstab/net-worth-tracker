@@ -197,7 +197,6 @@
     }
 
     if (isEdit) {
-      // 編輯模式：只更新數量、幣別、平均成本，不動 pricePerUnit（市場價格）
       assets.updateAsset(asset.id, {
         name: finalName,
         symbol: finalSymbol,
@@ -207,6 +206,7 @@
         currency: finalCurrency,
         avgCost: finalAvgCost,
       });
+      showToast(`${finalSymbol || finalName} ${t('common.edit')}`, 'success');
     } else {
       assets.addAsset({
         id: crypto.randomUUID(),
@@ -221,6 +221,7 @@
         priceSource: 'manual',
         lastPriceUpdate: null,
       });
+      showToast(`${finalSymbol || finalName} ${t('common.add')}`, 'success');
     }
 
     dispatch('close');

@@ -175,8 +175,10 @@
 
     if (isEdit) {
       liabilities.updateLiability(liability.id, data);
+      showToast(`${name.trim()} ${t('common.edit')}`, 'success');
     } else {
       liabilities.addLiability({ id: crypto.randomUUID(), ...data });
+      showToast(`${name.trim()} ${t('common.add')}`, 'success');
     }
 
     dispatch('close');
