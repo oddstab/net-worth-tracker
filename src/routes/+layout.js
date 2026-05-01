@@ -1,3 +1,3 @@
-// 停用 SSR 與預渲染 — 純 SPA 模式，所有頁面皆在客戶端渲染
+// SPA 模式：客戶端渲染，但預渲染所有頁面為靜態 HTML
 export const ssr = false;
-export const prerender = false;
+export const prerender = true;

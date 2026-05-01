@@ -13,6 +13,7 @@
   import { calculateLoanSchedule, calculateEqualPrincipalSchedule } from '$lib/utils/calculator.js';
   import { showConfirmDialog } from '$lib/stores/confirmDialog.js';
   import { liabilities } from '$lib/stores/liabilities.js';
+  import { showToast } from '$lib/stores/toast.js';
   import { createEventDispatcher } from 'svelte';
   import Icon from '../Icon.svelte';
 
@@ -143,7 +144,10 @@
     showConfirmDialog(
       t('confirm.deleteTitle'),
       t('confirm.deleteLiability', { name: liability.name }),
-      () => { liabilities.removeLiability(liability.id); }
+      () => {
+        liabilities.removeLiability(liability.id);
+        showToast(`${liability.name} ${t('common.delete')}`, 'success');
+      }
     );
   }
 </script>
