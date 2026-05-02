@@ -154,7 +154,6 @@ html {
   scroll-behavior: smooth;
   overflow-y: scroll;
   scrollbar-gutter: stable;
-  overscroll-behavior-y: none;
 }
 
 body {
@@ -166,7 +165,6 @@ body {
   min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
   overflow-x: hidden;
-  overscroll-behavior-y: none;
 }
 
 /* ── Utility Classes ── */
