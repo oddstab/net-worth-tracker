@@ -43,6 +43,11 @@
   /** 計算 TWD 值 */
   $: twdValue = calculateAssetTWD(asset.quantity, asset.pricePerUnit, asset.currency, exchangeRate);
 
+  /** 損益 = (市價 - 平均成本) × 數量 */
+  $: effectiveAvgCost = asset.avgCost || asset.pricePerUnit;
+  $: pnl = (asset.pricePerUnit - effectiveAvgCost) * asset.quantity;
+  $: pnlPercent = effectiveAvgCost > 0 ? ((asset.pricePerUnit - effectiveAvgCost) / effectiveAvgCost) * 100 : 0;
+
   /** 質押資訊 */
   $: pledgeBorrowed = asset.symbol
     ? $liabilitiesStore
@@ -186,6 +191,12 @@
     <div class="asset-detail-row">
       <span class="asset-label">{t('asset.avgCost')}</span>
       <span class="asset-value">{formatPrice(asset.avgCost || asset.pricePerUnit, asset.currency)}</span>
+    </div>
+    <div class="asset-detail-row">
+      <span class="asset-label">{t('dashboard.pnlLabel')}</span>
+      <span class="asset-value" style="color: {pnl > 0 ? 'var(--color-positive)' : pnl < 0 ? 'var(--color-negative)' : 'var(--text-secondary)'}">
+        {pnl >= 0 ? '+' : ''}{formatCurrency(pnl)} ({pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(2)}%)
+      </span>
     </div>
     <div class="asset-detail-row">
       <span class="asset-label">{t('asset.lastUpdate')}</span>
