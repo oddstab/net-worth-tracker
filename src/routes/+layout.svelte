@@ -112,6 +112,9 @@
   /** PWA 安裝提示 */
   let deferredInstallPrompt = null;
 
+  /** 是否顯示 PWA 安裝橫幅 */
+  let showInstallBanner = false;
+
   /** 價格系統控制物件 */
   let priceSystem = null;
 
@@ -121,11 +124,22 @@
   onMount(() => {
     registerServiceWorker();
 
-    // 監聯 PWA 安裝提示（儲存事件供設定頁使用）
+    // 監聽 PWA 安裝提示（儲存事件供設定頁使用，並顯示安裝橫幅）
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredInstallPrompt = e;
       window.__pwaInstallPrompt = e;
+      // 延遲 3 秒顯示安裝橫幅，避免頁面剛載入就彈出
+      setTimeout(() => {
+        showInstallBanner = true;
+      }, 3000);
+    });
+
+    // 已安裝時隱藏橫幅
+    window.addEventListener('appinstalled', () => {
+      showInstallBanner = false;
+      deferredInstallPrompt = null;
+      window.__pwaInstallPrompt = null;
     });
 
     // 初始化價格系統：自動更新台股/加密貨幣市場價格
@@ -209,6 +223,27 @@
   function dismissUpdate() {
     showUpdatePrompt = false;
   }
+
+  /**
+   * 使用者點擊安裝 PWA。
+   */
+  async function handleInstallBanner() {
+    if (!deferredInstallPrompt) return;
+    deferredInstallPrompt.prompt();
+    const { outcome } = await deferredInstallPrompt.userChoice;
+    if (outcome === 'accepted') {
+      showInstallBanner = false;
+    }
+    deferredInstallPrompt = null;
+    window.__pwaInstallPrompt = null;
+  }
+
+  /**
+   * 使用者關閉安裝橫幅。
+   */
+  function dismissInstallBanner() {
+    showInstallBanner = false;
+  }
 </script>
 
 {#key localeKey}
@@ -226,6 +261,15 @@
     <span>有新版本可用！</span>
     <button class="sw-update-btn" on:click={applyUpdate}>立即更新</button>
     <button class="sw-update-dismiss" on:click={dismissUpdate} aria-label="關閉"><Icon name="x" size={16}/></button>
+  </div>
+{/if}
+
+{#if showInstallBanner}
+  <div class="pwa-install-banner" role="alert">
+    <Icon name="download" size={18}/>
+    <span>安裝到主畫面，享受更好的體驗</span>
+    <button class="pwa-install-btn" on:click={handleInstallBanner}>安裝</button>
+    <button class="pwa-install-dismiss" on:click={dismissInstallBanner} aria-label="關閉"><Icon name="x" size={16}/></button>
   </div>
 {/if}
 
@@ -277,6 +321,65 @@
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+
+  /* ── PWA 安裝橫幅 ── */
+  .pwa-install-banner {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent-color, #4fc3f7);
+    color: var(--color-bg, #0f0f1a);
+    padding: 10px 16px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 9998;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    font-size: 0.85rem;
+    font-weight: 600;
+    max-width: calc(100vw - 32px);
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .pwa-install-btn {
+    background: var(--color-bg, #0f0f1a);
+    color: var(--accent-color, #4fc3f7);
+    border: none;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    min-height: 34px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .pwa-install-btn:hover {
+    opacity: 0.9;
+  }
+
+  .pwa-install-dismiss {
+    background: none;
+    border: none;
+    color: var(--color-bg, #0f0f1a);
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    min-width: 28px;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+    to   { transform: translateX(-50%) translateY(0); opacity: 1; }
   }
 
   /* ── 頁面滑動過渡動畫 ── */
