@@ -101,6 +101,7 @@
       background-color: var(--bg-secondary);
       border-bottom: 1px solid var(--border-color);
       z-index: 100;
+      overscroll-behavior: none;
     }
     .mobile-banner .navbar-title {
       font-size: var(--font-size-lg);
@@ -122,6 +123,7 @@
       transform: translateX(-50%);
       z-index: 100;
       width: calc(100% - 24px);
+      overscroll-behavior: none;
       max-width: 420px;
     }
 
