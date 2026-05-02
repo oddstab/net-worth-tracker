@@ -254,20 +254,6 @@
         <!-- 左側表單 -->
         <div class="asset-form-col">
           <form id="asset-form" novalidate autocomplete="off" on:submit|preventDefault={handleSubmit}>
-            <!-- 已選資產資訊 + 套用價格（新增模式，選擇代號後顯示） -->
-            {#if !isEdit && symbolValue && name}
-              <div class="selected-asset-bar">
-                <div class="selected-asset-info">
-                  <span class="selected-asset-symbol">{symbolValue}</span>
-                  <span class="selected-asset-name">{name}</span>
-                </div>
-                {#if latestPrice != null}
-                  <button type="button" class="btn btn-primary btn-apply-price" on:click={() => { avgCost = latestPrice; }}>
-                    {t('asset.applyPrice', { price: latestPrice.toLocaleString('zh-TW') })}
-                  </button>
-                {/if}
-              </div>
-            {/if}
 
             <!-- 類型 + 分類 -->
             <div class="form-row">
@@ -368,6 +354,19 @@
                 {/if}
               </div>
             </div>
+
+            <!-- 套用價格（新增/編輯模式，有代號且有最新價格時顯示） -->
+            {#if symbolValue && name && latestPrice != null}
+              <div class="selected-asset-bar">
+                <div class="selected-asset-info">
+                  <span class="selected-asset-symbol">{symbolValue}</span>
+                  <span class="selected-asset-name">{name}</span>
+                </div>
+                <button type="button" class="btn btn-primary btn-apply-price" on:click={() => { avgCost = latestPrice; }}>
+                  {t('asset.applyPrice', { price: latestPrice.toLocaleString('zh-TW') })}
+                </button>
+              </div>
+            {/if}
           </form>
         </div>
 
