@@ -247,7 +247,7 @@
 
     liabilities.addLiability({
       id: crypto.randomUUID(),
-      name: `${symbol} ${t('asset.pledge')}`,
+      name: symbol,
       category: 'pledge',
       amount: loanInput,
       currency: 'TWD',
