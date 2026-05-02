@@ -17,6 +17,30 @@
   import LanguageSelector from '../../components/settings/LanguageSelector.svelte';
   import GoogleIntegration from '../../components/settings/GoogleIntegration.svelte';
   import { t } from '$lib/services/i18n.js';
+  import Icon from '../../components/Icon.svelte';
+  import { showToast } from '$lib/stores/toast.js';
+
+  /** PWA 安裝 */
+  let canInstall = false;
+
+  $: if (typeof window !== 'undefined') {
+    canInstall = !!window.__pwaInstallPrompt;
+  }
+
+  async function handleInstallPWA() {
+    const prompt = window.__pwaInstallPrompt;
+    if (!prompt) {
+      showToast('此瀏覽器不支援安裝，或已安裝', 'error');
+      return;
+    }
+    prompt.prompt();
+    const { outcome } = await prompt.userChoice;
+    if (outcome === 'accepted') {
+      showToast('已安裝到主畫面！', 'success');
+    }
+    window.__pwaInstallPrompt = null;
+    canInstall = false;
+  }
 </script>
 
 <div class="page-container">
@@ -31,10 +55,13 @@
       <DiagnosticTools />
       <section class="settings-section">
         <h2 class="settings-section-title">{t('settings.about')}</h2>
-        <p style="font-size: var(--font-size-sm); color: var(--text-secondary);">
+        <p style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-md);">
           {t('common.appName')} v1.0.0<br/>
           {t('settings.aboutDesc')}
         </p>
+        <button class="btn btn-primary" style="width: 100%;" on:click={handleInstallPWA}>
+          <Icon name="download" size={16}/> 安裝到主畫面
+        </button>
       </section>
     </div>
   </div>
