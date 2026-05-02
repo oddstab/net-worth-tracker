@@ -59,7 +59,7 @@
       <section class="settings-section">
         <h2 class="settings-section-title">{t('settings.about')}</h2>
         <p style="font-size: var(--font-size-sm); color: var(--text-secondary); margin-bottom: var(--spacing-md);">
-          {t('common.appName')} v1.0.0<br/>
+          {t('common.appName')} v2.0.0<br/>
           {t('settings.aboutDesc')}
         </p>
         <button class="btn btn-primary" style="width: 100%;" on:click={handleInstallPWA}>

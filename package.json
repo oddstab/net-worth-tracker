@@ -1,6 +1,6 @@
 {
   "name": "net-worth-tracker",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "個人資產追蹤器 — 純前端 PWA，管理資產與負債，統一以新台幣顯示淨資產",
   "type": "module",
   "scripts": {
