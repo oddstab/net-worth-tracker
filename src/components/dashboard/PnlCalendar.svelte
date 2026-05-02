@@ -9,10 +9,9 @@
     snapshots — 快照陣列 [{ date, netWorth }]
 -->
 <script>
-  import { formatCurrency } from '$lib/services/localeFormatter.js';
+  import { formatCurrency, formatCompact } from '$lib/services/localeFormatter.js';
   import { t } from '$lib/services/i18n.js';
   import { tStore } from '$lib/services/i18n.js';
-  import { locale } from '$lib/stores/locale.js';
 
   /** @type {Array<{ date: string, netWorth: number }>} */
   export let snapshots = [];
@@ -152,22 +151,16 @@
     return { total, count, returnRate };
   })();
 
-  /** 格式化盈虧金額（簡潔版） */
+  /** 格式化盈虧金額（簡潔版，透過 formatCompact 支援貨幣換算） */
   function formatPnl(value) {
     if (value == null) return '';
-    const sign = value >= 0 ? '+' : '';
-    const abs = Math.abs(value);
-    if (abs >= 10000) {
-      try {
-        const compact = new Intl.NumberFormat($locale, {
-          notation: 'compact',
-          maximumFractionDigits: 1,
-          signDisplay: 'always',
-        }).format(value);
-        return compact;
-      } catch { /* fallback below */ }
+    const formatted = formatCompact(value);
+    // formatCompact 已包含貨幣符號，但不含正號前綴
+    // 若為正值且格式化結果不含 '+' 或 '-'，加上 '+' 前綴
+    if (value > 0 && !formatted.startsWith('+')) {
+      return '+' + formatted;
     }
-    return `${sign}${Math.round(value).toLocaleString($locale)}`;
+    return formatted;
   }
 </script>
 

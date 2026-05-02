@@ -2,6 +2,7 @@
   settings/+page.svelte — 設定頁面
 
   組合所有設定區塊元件：
+  - CurrencySwitcher（顯示貨幣切換）
   - ExchangeRateSection（匯率設定）
   - DataManagement（資料匯出/匯入）
   - DiagnosticTools（診斷工具）
@@ -11,6 +12,7 @@
   所有文字使用 t() 翻譯函式。
 -->
 <script>
+  import CurrencySwitcher from '../../components/settings/CurrencySwitcher.svelte';
   import ExchangeRateSection from '../../components/settings/ExchangeRateSection.svelte';
   import DataManagement from '../../components/settings/DataManagement.svelte';
   import DiagnosticTools from '../../components/settings/DiagnosticTools.svelte';
@@ -30,13 +32,13 @@
   async function handleInstallPWA() {
     const prompt = window.__pwaInstallPrompt;
     if (!prompt) {
-      showToast('此瀏覽器不支援安裝，或已安裝', 'error');
+      showToast(t('pwa.notSupported'), 'error');
       return;
     }
     prompt.prompt();
     const { outcome } = await prompt.userChoice;
     if (outcome === 'accepted') {
-      showToast('已安裝到主畫面！', 'success');
+      showToast(t('pwa.installed'), 'success');
     }
     window.__pwaInstallPrompt = null;
     canInstall = false;
@@ -46,6 +48,7 @@
 <div class="page-container">
   <div class="settings-grid">
     <div class="settings-col-left">
+      <CurrencySwitcher />
       <ExchangeRateSection />
       <DataManagement />
       <GoogleIntegration />
@@ -60,7 +63,7 @@
           {t('settings.aboutDesc')}
         </p>
         <button class="btn btn-primary" style="width: 100%;" on:click={handleInstallPWA}>
-          <Icon name="download" size={16}/> 安裝到主畫面
+          <Icon name="download" size={16}/> {t('pwa.install')}
         </button>
       </section>
     </div>

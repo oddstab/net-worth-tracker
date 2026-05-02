@@ -17,6 +17,10 @@ import {
   saveSnapshots,
   exportData,
   importData,
+  saveDisplayCurrency,
+  loadDisplayCurrency,
+  saveExchangeRateMap,
+  loadExchangeRateMap,
 } from '../src/lib/services/storage.js';
 
 // ─── 每次測試前清除 localStorage ──────────────────────────────────────────────
@@ -79,6 +83,56 @@ describe('Storage Service 損壞資料處理', () => {
   it('localStorage 中存放無效 JSON 時 loadExchangeRate 回傳預設值', () => {
     localStorage.setItem('nwt_exchange_rate', 'not-a-number');
     expect(loadExchangeRate()).toBe(31.5);
+  });
+
+  it('localStorage 中存放無效 JSON 時 loadDisplayCurrency 回傳預設值 TWD', () => {
+    localStorage.setItem('nwt_display_currency', '{corrupted');
+    expect(loadDisplayCurrency()).toBe('TWD');
+  });
+
+  it('localStorage 中存放無效 JSON 時 loadExchangeRateMap 回傳預設匯率', () => {
+    localStorage.setItem('nwt_exchange_rate_map', 'not valid json!!');
+    expect(loadExchangeRateMap()).toEqual({ USD: 31.5, CNY: 4.35, JPY: 0.21, KRW: 0.023 });
+  });
+});
+
+// ─── 單元測試：顯示貨幣讀寫 ──────────────────────────────────────────────────
+
+describe('Storage Service 顯示貨幣讀寫', () => {
+  it('loadDisplayCurrency 預設回傳 TWD', () => {
+    expect(loadDisplayCurrency()).toBe('TWD');
+  });
+
+  it('saveDisplayCurrency / loadDisplayCurrency round-trip', () => {
+    saveDisplayCurrency('USD');
+    expect(loadDisplayCurrency()).toBe('USD');
+  });
+
+  it('可儲存並讀取所有支援的貨幣代碼', () => {
+    const currencies = ['TWD', 'USD', 'CNY', 'JPY', 'KRW'];
+    for (const cur of currencies) {
+      saveDisplayCurrency(cur);
+      expect(loadDisplayCurrency()).toBe(cur);
+    }
+  });
+});
+
+// ─── 單元測試：匯率對照表讀寫 ────────────────────────────────────────────────
+
+describe('Storage Service 匯率對照表讀寫', () => {
+  it('loadExchangeRateMap 預設回傳預設匯率對照表', () => {
+    expect(loadExchangeRateMap()).toEqual({
+      USD: 31.5,
+      CNY: 4.35,
+      JPY: 0.21,
+      KRW: 0.023,
+    });
+  });
+
+  it('saveExchangeRateMap / loadExchangeRateMap round-trip', () => {
+    const customRates = { USD: 32.0, CNY: 4.5, JPY: 0.22, KRW: 0.025 };
+    saveExchangeRateMap(customRates);
+    expect(loadExchangeRateMap()).toEqual(customRates);
   });
 });
 
@@ -272,6 +326,90 @@ describe('Property 2: 匯入驗證拒絕缺失欄位', () => {
             // 錯誤訊息應包含缺失欄位的名稱
             return err.message.includes(fieldToRemove);
           }
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+});
+
+// ─── Feature: currency-switcher, Property 6: 匯出匯入資料完整性 ──────────────
+// **Validates: Requirements 6.3, 6.4**
+describe('Property 6: 匯出匯入資料完整性', { timeout: 30000 }, () => {
+  /** 支援的貨幣代碼 */
+  const currencyArb = fc.constantFrom('TWD', 'USD', 'CNY', 'JPY', 'KRW');
+
+  it('exportData 輸出的 JSON 中所有金額為原始 TWD 數值，不受 displayCurrency 影響', () => {
+    fc.assert(
+      fc.property(
+        appStateArb,
+        currencyArb,
+        currencyArb,
+        (appState, currency1, currency2) => {
+          // 先清除 localStorage
+          localStorage.clear();
+
+          // 存入資料
+          saveAssets(appState.assets);
+          saveLiabilities(appState.liabilities);
+          saveExchangeRate(appState.exchangeRate);
+          saveSnapshots(appState.snapshots);
+
+          // 設定第一種顯示貨幣後匯出
+          saveDisplayCurrency(currency1);
+          const exported1 = exportData();
+
+          // 切換為第二種顯示貨幣後匯出
+          saveDisplayCurrency(currency2);
+          const exported2 = exportData();
+
+          // 兩次匯出結果應完全相同（exportData 不受 displayCurrency 影響）
+          return exported1 === exported2;
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('importData 以 TWD 為基準匯入，不受當前 displayCurrency 設定影響', () => {
+    fc.assert(
+      fc.property(
+        appStateArb,
+        currencyArb,
+        currencyArb,
+        (appState, currency1, currency2) => {
+          const jsonString = JSON.stringify(appState);
+
+          // 在第一種顯示貨幣下匯入
+          localStorage.clear();
+          saveDisplayCurrency(currency1);
+          const imported1 = importData(jsonString);
+
+          // 讀取匯入後的 localStorage 資料
+          const assets1 = loadAssets();
+          const liabilities1 = loadLiabilities();
+          const rate1 = loadExchangeRate();
+          const snapshots1 = loadSnapshots();
+
+          // 在第二種顯示貨幣下匯入
+          localStorage.clear();
+          saveDisplayCurrency(currency2);
+          const imported2 = importData(jsonString);
+
+          // 讀取匯入後的 localStorage 資料
+          const assets2 = loadAssets();
+          const liabilities2 = loadLiabilities();
+          const rate2 = loadExchangeRate();
+          const snapshots2 = loadSnapshots();
+
+          // 兩次匯入結果應完全相同（importData 不受 displayCurrency 影響）
+          return (
+            JSON.stringify(imported1) === JSON.stringify(imported2) &&
+            JSON.stringify(assets1) === JSON.stringify(assets2) &&
+            JSON.stringify(liabilities1) === JSON.stringify(liabilities2) &&
+            rate1 === rate2 &&
+            JSON.stringify(snapshots1) === JSON.stringify(snapshots2)
+          );
         }
       ),
       { numRuns: 100 }

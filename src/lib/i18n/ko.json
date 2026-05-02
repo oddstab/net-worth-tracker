@@ -79,7 +79,15 @@
     "month": "개월",
     "avgCost": "평균 비용",
     "marketPrice": "시장 가격",
-    "pledge": "담보"
+    "pledge": "담보",
+    "tdccTop": "상위 {percent}%",
+    "tdccLabel": "주주 분포표",
+    "tdccLevel": "보유 주식 구간",
+    "tdccHolders": "인원",
+    "tdccShares": "주식수",
+    "tdccPercent": "비율 %",
+    "tdccTopPercent": "상위 %",
+    "tdccTotal": "합　계"
   },
   "liability": {
     "name": "이름",
@@ -138,6 +146,12 @@
     "manualRefresh": "수동 주가 업데이트",
     "manualRefreshDesc": "즉시 주가 업데이트 실행",
     "refreshing": "업데이트 중...",
+    "displayCurrency": "표시 통화",
+    "displayCurrencyDesc": "모든 금액의 표시 통화를 전환합니다. 기본 데이터에는 영향을 미치지 않습니다.",
+    "rateMapTitle": "환율 설정",
+    "rateMapDesc": "각 통화의 TWD 대비 환율을 설정",
+    "syncRate": "환율 동기화",
+    "syncing": "동기화 중...",
     "language": "언어 설정",
     "about": "정보",
     "aboutDesc": "프론트엔드 전용 PWA. 모든 데이터는 로컬 기기에 저장되며 서버로 전송되지 않습니다.",
@@ -163,7 +177,18 @@
     "googleNoSheetData": "Google Sheets에 자산 데이터가 없습니다",
     "googleOpenSheet": "Google Sheets 열기"
   },
+  "currency": {
+    "TWD": "대만 달러",
+    "USD": "미국 달러",
+    "CNY": "위안화",
+    "JPY": "일본 엔",
+    "KRW": "한국 원"
+  },
   "toast": {
+    "currencySwitched": "표시 통화가 {currency}(으)로 전환되었습니다",
+    "rateMapUpdated": "환율이 업데이트되었습니다",
+    "rateSynced": "환율이 동기화되었습니다",
+    "rateSyncFailed": "환율 동기화 실패. 나중에 다시 시도해주세요",
     "rateUpdated": "환율이 업데이트되었습니다",
     "dataExported": "데이터를 내보냈습니다",
     "dataImported": "데이터를 가져왔습니다",
@@ -189,6 +214,7 @@
     "ratePositive": "환율은 양수여야 합니다",
     "amountPositive": "금액은 양수여야 합니다",
     "drawdownExceedsLimit": "인출 금액이 대출 한도를 초과할 수 없습니다",
+    "ratePositiveAll": "모든 환율은 양수여야 합니다",
     "fillRequired": "모든 필수 항목을 입력해주세요"
   },
   "summary": {
@@ -232,7 +258,10 @@
   "pwa": {
     "updateAvailable": "새 버전을 사용할 수 있습니다. 지금 업데이트하시겠습니까?",
     "update": "업데이트",
-    "dismiss": "나중에"
+    "dismiss": "나중에",
+    "install": "홈 화면에 추가",
+    "installed": "홈 화면에 추가되었습니다!",
+    "notSupported": "이 브라우저는 설치를 지원하지 않거나 이미 설치되어 있습니다"
   },
   "tools": {
     "title": "계산 도구상자",

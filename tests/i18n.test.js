@@ -195,7 +195,15 @@ describe('Feature: sveltekit-spa-migration, Property 16: 語言持久化 Round-T
       fc.property(
         fc.constantFrom(...SUPPORTED_LOCALES),
         (localeCode) => {
-          // 設定語言
+          // 先切換到不同語言，確保後續 set() 會觸發 subscriber
+          // （Svelte writable store 在值相同時不通知 subscriber）
+          const differentLocale = localeCode === 'en' ? 'ja' : 'en';
+          setLocale(differentLocale);
+
+          // 清除 localStorage，模擬乾淨狀態
+          localStorage.removeItem('nwt_locale');
+
+          // 設定目標語言
           setLocale(localeCode);
 
           // 驗證 localStorage 已儲存

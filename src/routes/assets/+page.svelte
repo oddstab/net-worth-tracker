@@ -14,7 +14,6 @@
   import { exchangeRate } from '$lib/stores/exchangeRate.js';
   import { pendingModal, clearPendingModal } from '$lib/stores/modalState.js';
   import { tdccStore } from '$lib/stores/tdcc.js';
-  import { onMount } from 'svelte';
   import AssetList from '../../components/assets/AssetList.svelte';
   import LiabilityList from '../../components/assets/LiabilityList.svelte';
   import AssetModal from '../../components/modals/AssetModal.svelte';
@@ -39,12 +38,10 @@
       return acc;
     }, []);
 
-  /** 頁面載入時取得 TDCC 排名 */
-  onMount(() => {
-    if (twStocks.length > 0) {
-      tdccStore.fetchRankings(twStocks);
-    }
-  });
+  /** 資產變動時重新計算 TDCC 排名（API 資料有快取，不會重複呼叫） */
+  $: if (twStocks.length > 0) {
+    tdccStore.fetchRankings(twStocks);
+  }
 
   // ─── Modal 狀態 ────────────────────────────────────────────────────────
 

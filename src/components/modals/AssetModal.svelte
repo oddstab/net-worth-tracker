@@ -45,7 +45,7 @@
   let symbolValue = asset?.symbol || preset?.symbol || '';
   let name = asset?.name || preset?.name || '';
   let quantity = asset?.quantity ?? '';
-  let currency = asset?.currency || 'TWD';
+  let currency = 'TWD';
   let pricePerUnit = asset?.pricePerUnit ?? '';
   let avgCost = asset?.avgCost ?? '';
 
@@ -147,9 +147,8 @@
 
   /** 套用價格按鈕 — 使用者主動點擊才套用到平均成本 */
   function handleApplyPrice(e) {
-    const { price, currency: cur } = e.detail;
+    const { price } = e.detail;
     avgCost = price;
-    currency = cur;
   }
 
   /** 關閉 Modal */
@@ -263,7 +262,7 @@
                   <span class="selected-asset-name">{name}</span>
                 </div>
                 {#if latestPrice != null}
-                  <button type="button" class="btn btn-primary btn-apply-price" on:click={() => { avgCost = latestPrice; currency = latestPriceCurrency; }}>
+                  <button type="button" class="btn btn-primary btn-apply-price" on:click={() => { avgCost = latestPrice; }}>
                     {t('asset.applyPrice', { price: latestPrice.toLocaleString('zh-TW') })}
                   </button>
                 {/if}
@@ -330,34 +329,25 @@
             </div>
             {/if}
 
-            <!-- 數量 -->
-            <div class="form-group">
-              <label class="form-label" for="asset-quantity">
-                {t('asset.quantity')} <span class="required">*</span>
-              </label>
-              <input
-                class="form-input"
-                type="number"
-                id="asset-quantity"
-                bind:value={quantity}
-                min="0"
-                step={type === 'tw_stock' ? '1' : 'any'}
-                autocomplete="off"
-                required
-              />
-              {#if quantityError}
-                <span class="form-error">{quantityError}</span>
-              {/if}
-            </div>
-
-            <!-- 幣別 + 價格 -->
+            <!-- 數量 + 平均成本 -->
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label" for="asset-currency">{t('asset.currency')}</label>
-                <select class="form-input" id="asset-currency" bind:value={currency}>
-                  <option value="TWD">TWD</option>
-                  <option value="USD">USD</option>
-                </select>
+                <label class="form-label" for="asset-quantity">
+                  {t('asset.quantity')} <span class="required">*</span>
+                </label>
+                <input
+                  class="form-input"
+                  type="number"
+                  id="asset-quantity"
+                  bind:value={quantity}
+                  min="0"
+                  step={type === 'tw_stock' ? '1' : 'any'}
+                  autocomplete="off"
+                  required
+                />
+                {#if quantityError}
+                  <span class="form-error">{quantityError}</span>
+                {/if}
               </div>
               <div class="form-group">
                 <label class="form-label" for="asset-price">

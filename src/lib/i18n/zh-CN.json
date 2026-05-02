@@ -79,7 +79,15 @@
     "month": "个月",
     "avgCost": "平均成本",
     "marketPrice": "市场价格",
-    "pledge": "质押"
+    "pledge": "质押",
+    "tdccTop": "前 {percent}%",
+    "tdccLabel": "集保股权分散表",
+    "tdccLevel": "持股/单位数分级",
+    "tdccHolders": "人数",
+    "tdccShares": "股数",
+    "tdccPercent": "占比 %",
+    "tdccTopPercent": "前 %",
+    "tdccTotal": "合　计"
   },
   "liability": {
     "name": "名称",
@@ -138,6 +146,12 @@
     "manualRefresh": "手动更新股价",
     "manualRefreshDesc": "立即执行一次股价更新",
     "refreshing": "更新中...",
+    "displayCurrency": "显示货币",
+    "displayCurrencyDesc": "切换所有金额的显示币种，底层数据不受影响",
+    "rateMapTitle": "汇率设置",
+    "rateMapDesc": "设置各货币对新台币的汇率",
+    "syncRate": "同步汇率",
+    "syncing": "同步中...",
     "language": "语言设置",
     "about": "关于",
     "aboutDesc": "纯前端 PWA，所有数据存储于本地设备，不传送至任何服务器。",
@@ -163,7 +177,18 @@
     "googleNoSheetData": "Google Sheets 中没有资产数据",
     "googleOpenSheet": "打开 Google Sheets"
   },
+  "currency": {
+    "TWD": "新台币",
+    "USD": "美元",
+    "CNY": "人民币",
+    "JPY": "日元",
+    "KRW": "韩元"
+  },
   "toast": {
+    "currencySwitched": "显示货币已切换为 {currency}",
+    "rateMapUpdated": "汇率已更新",
+    "rateSynced": "汇率已同步",
+    "rateSyncFailed": "汇率同步失败，请稍后再试",
     "rateUpdated": "汇率已更新",
     "dataExported": "数据已导出",
     "dataImported": "数据已导入",
@@ -189,6 +214,7 @@
     "ratePositive": "汇率必须为正数",
     "amountPositive": "金额必须为正数",
     "drawdownExceedsLimit": "动用金额不能超过批准额度",
+    "ratePositiveAll": "所有汇率必须为正数",
     "fillRequired": "请填写所有必填栏位"
   },
   "summary": {
@@ -232,7 +258,10 @@
   "pwa": {
     "updateAvailable": "有新版本可用，是否立即更新？",
     "update": "更新",
-    "dismiss": "稍后"
+    "dismiss": "稍后",
+    "install": "安装到主屏幕",
+    "installed": "已安装到主屏幕！",
+    "notSupported": "此浏览器不支持安装，或已安装"
   },
   "tools": {
     "title": "计算工具箱",

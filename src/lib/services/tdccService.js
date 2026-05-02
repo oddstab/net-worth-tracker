@@ -29,6 +29,25 @@
 
 const TDCC_API_URL = 'https://openapi.tdcc.com.tw/v1/opendata/1-5';
 
+/** 持股分級標籤對照 */
+export const LEVEL_LABELS = {
+  1:  '1-999',
+  2:  '1,000-5,000',
+  3:  '5,001-10,000',
+  4:  '10,001-15,000',
+  5:  '15,001-20,000',
+  6:  '20,001-30,000',
+  7:  '30,001-40,000',
+  8:  '40,001-50,000',
+  9:  '50,001-100,000',
+  10: '100,001-200,000',
+  11: '200,001-400,000',
+  12: '400,001-600,000',
+  13: '600,001-800,000',
+  14: '800,001-1,000,000',
+  15: '1,000,001+',
+};
+
 /** 快取：symbol → { data, fetchedAt } */
 const cache = new Map();
 
@@ -129,6 +148,7 @@ export async function getTDCCRanking(symbol, quantity) {
       level: userLevel,
       totalHolders,
       date,
+      levels,
     };
   } catch (err) {
     console.warn('[TDCC] 取得排名失敗:', err.message);
@@ -175,6 +195,7 @@ export async function batchGetTDCCRanking(stocks) {
         level: userLevel,
         totalHolders,
         date: levels[0]?.date || '',
+        levels,
       });
     }
   } catch (err) {

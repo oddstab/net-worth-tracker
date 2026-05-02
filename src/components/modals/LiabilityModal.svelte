@@ -34,7 +34,7 @@
 
   let name = liability?.name || '';
   let category = liability?.category || 'credit';
-  let currency = liability?.currency || 'TWD';
+  let currency = 'TWD';
   /** 金額以「萬」為單位輸入 */
   let amountWan = liability?.amount ? liability.amount / 10000 : '';
   let interestRate = liability?.interestRate ?? '';
@@ -225,45 +225,38 @@
             <select class="form-input" id="liability-category" bind:value={category} disabled={isPledgeEdit}>
               <option value="credit">{t('liability.credit')}</option>
               <option value="home_loan">{t('liability.homeLoan')}</option>
-              <option value="pledge">{t('liability.pledge')}</option>
+              {#if isPledgeEdit}
+                <option value="pledge">{t('liability.pledge')}</option>
+              {/if}
               <option value="mortgage">{t('liability.mortgage')}</option>
               <option value="other">{t('liability.other')}</option>
             </select>
           </div>
         </div>
 
-        <!-- 幣別 + 金額（非循環型）/ 幣別 + 年利率（循環型） -->
-        <div class="form-row">
+        <!-- 金額（非循環型，獨佔一整 row）/ 年利率 + 動用日期（循環型） -->
+        {#if !isRevolving}
           <div class="form-group">
-            <label class="form-label" for="liability-currency">{t('asset.currency')}</label>
-            <select class="form-input" id="liability-currency" bind:value={currency}>
-              <option value="TWD">TWD</option>
-              <option value="USD">USD</option>
-            </select>
+            <label class="form-label" for="liability-amount">
+              {t('liability.amountWan')} <span class="required">*</span>
+            </label>
+            <input
+              class="form-input"
+              type="number"
+              id="liability-amount"
+              bind:value={amountWan}
+              min="0"
+              step="any"
+              placeholder="例: 700"
+              required
+            />
+            {#if amountError}
+              <span class="form-error">{amountError}</span>
+            {/if}
           </div>
-
-          {#if !isRevolving}
-            <!-- 非循環型：金額 -->
-            <div class="form-group">
-              <label class="form-label" for="liability-amount">
-                {t('liability.amountWan')} <span class="required">*</span>
-              </label>
-              <input
-                class="form-input"
-                type="number"
-                id="liability-amount"
-                bind:value={amountWan}
-                min="0"
-                step="any"
-                placeholder="例: 700"
-                required
-              />
-              {#if amountError}
-                <span class="form-error">{amountError}</span>
-              {/if}
-            </div>
-          {:else}
-            <!-- 循環型：年利率放在幣別旁邊 -->
+        {:else}
+          <!-- 循環型：年利率 + 動用日期同一 row -->
+          <div class="form-row">
             <div class="form-group">
               <label class="form-label" for="liability-rate-rev">{t('liability.interestRate')}</label>
               <input
@@ -277,8 +270,12 @@
                 placeholder="例: 2.5"
               />
             </div>
-          {/if}
-        </div>
+            <div class="form-group">
+              <label class="form-label" for="revolving-drawdown-date">{t('liability.drawdownDate')}</label>
+              <input class="form-input" type="date" id="revolving-drawdown-date" bind:value={drawdownDate} />
+            </div>
+          </div>
+        {/if}
 
         <!-- 非循環型：年利率 + 期數 -->
         {#if !isRevolving}
@@ -330,33 +327,7 @@
         <!-- 循環型：核准額度 + 動用金額 + 滑桿（質押除外，質押全額動用） -->
         {#if isRevolving}
           {#if category === 'pledge'}
-            <!-- 質押：核准額度 + 動用日期同一行 -->
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="revolving-credit-line">
-                  {t('liability.creditLine')} <span class="required">*</span>
-                  {#if isPledgeEdit}🔒{/if}
-                </label>
-                <input
-                  class="form-input"
-                  type="number"
-                  id="revolving-credit-line"
-                  bind:value={creditLineWan}
-                  min="0"
-                  step="any"
-                  placeholder="例: 100"
-                  required
-                  disabled={isPledgeEdit}
-                />
-                {#if creditLineError}
-                  <span class="form-error">{creditLineError}</span>
-                {/if}
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="revolving-drawdown-date">{t('liability.drawdownDate')}</label>
-                <input class="form-input" type="date" id="revolving-drawdown-date" bind:value={drawdownDate} />
-              </div>
-            </div>
+            <!-- 質押：無額外欄位（動用日期已在年利率旁） -->
           {:else}
             <!-- 非質押循環型：核准額度 + 動用金額 -->
             <div class="form-row">
@@ -419,11 +390,6 @@
                 <button type="button" class="drawdown-quick-btn" class:active={sliderPercent === 75} on:click={() => setPercent(75)}>75%</button>
                 <button type="button" class="drawdown-quick-btn" class:active={sliderPercent === 100} on:click={() => setPercent(100)}>100%</button>
               </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label" for="revolving-drawdown-date">{t('liability.drawdownDate')}</label>
-              <input class="form-input" type="date" id="revolving-drawdown-date" bind:value={drawdownDate} />
             </div>
           {/if}
 

@@ -81,7 +81,13 @@
     "marketPrice": "市場價格",
     "pledge": "質押",
     "tdccTop": "前 {percent}%",
-    "tdccLabel": "集保排名"
+    "tdccLabel": "集保股權分散表",
+    "tdccLevel": "持股/單位數分級",
+    "tdccHolders": "人數",
+    "tdccShares": "股數",
+    "tdccPercent": "占比 %",
+    "tdccTopPercent": "前 %",
+    "tdccTotal": "合　計"
   },
   "liability": {
     "name": "名稱",
@@ -140,6 +146,12 @@
     "manualRefresh": "手動更新股價",
     "manualRefreshDesc": "立即執行一次股價更新",
     "refreshing": "更新中...",
+    "displayCurrency": "顯示貨幣",
+    "displayCurrencyDesc": "切換所有金額的顯示幣別，底層資料不受影響",
+    "rateMapTitle": "匯率設定",
+    "rateMapDesc": "設定各貨幣對新台幣的匯率",
+    "syncRate": "同步匯率",
+    "syncing": "同步中...",
     "language": "語言設定",
     "about": "關於",
     "aboutDesc": "純前端 PWA，所有資料儲存於本地裝置，不傳送至任何伺服器。",
@@ -165,7 +177,18 @@
     "googleNoSheetData": "Google Sheets 中沒有資產數據",
     "googleOpenSheet": "打開 Google Sheets"
   },
+  "currency": {
+    "TWD": "新台幣",
+    "USD": "美元",
+    "CNY": "人民幣",
+    "JPY": "日圓",
+    "KRW": "韓元"
+  },
   "toast": {
+    "currencySwitched": "顯示貨幣已切換為 {currency}",
+    "rateMapUpdated": "匯率已更新",
+    "rateSynced": "匯率已同步",
+    "rateSyncFailed": "匯率同步失敗，請稍後再試",
     "rateUpdated": "匯率已更新",
     "dataExported": "資料已匯出",
     "dataImported": "資料已匯入",
@@ -191,6 +214,7 @@
     "ratePositive": "匯率必須為正數",
     "amountPositive": "金額必須為正數",
     "drawdownExceedsLimit": "動用金額不能超過核准額度",
+    "ratePositiveAll": "所有匯率必須為正數",
     "fillRequired": "請填寫所有必填欄位"
   },
   "summary": {
@@ -234,7 +258,10 @@
   "pwa": {
     "updateAvailable": "有新版本可用，是否立即更新？",
     "update": "更新",
-    "dismiss": "稍後"
+    "dismiss": "稍後",
+    "install": "安裝到主畫面",
+    "installed": "已安裝到主畫面！",
+    "notSupported": "此瀏覽器不支援安裝，或已安裝"
   },
   "tools": {
     "title": "計算工具箱",

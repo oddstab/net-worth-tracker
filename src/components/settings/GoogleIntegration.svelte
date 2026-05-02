@@ -384,7 +384,7 @@
   /* Google 整合區塊樣式 */
   .google-desc {
     font-size: var(--font-size-sm, 0.875rem);
-    color: var(--text-secondary, #aaa);
+    color: var(--text-secondary);
     margin-bottom: 12px;
   }
 
@@ -393,7 +393,7 @@
     align-items: center;
     gap: 12px;
     padding: 12px;
-    background: var(--bg-card, #1e1e2e);
+    background: var(--bg-card);
     border-radius: 8px;
     margin-bottom: 12px;
   }
@@ -413,12 +413,12 @@
   .google-user-name {
     font-weight: 600;
     font-size: var(--font-size-sm, 0.875rem);
-    color: var(--text-primary, #fff);
+    color: var(--text-primary);
   }
 
   .google-user-email {
     font-size: var(--font-size-xs, 0.75rem);
-    color: var(--text-secondary, #aaa);
+    color: var(--text-secondary);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -461,7 +461,7 @@
     display: block;
     font-size: var(--font-size-sm, 0.875rem);
     font-weight: 600;
-    color: var(--text-primary, #fff);
+    color: var(--text-primary);
     margin-bottom: 6px;
   }
 
@@ -469,30 +469,30 @@
     width: 100%;
     padding: 10px 12px;
     font-size: var(--font-size-sm, 0.875rem);
-    background: var(--bg-input, #2a2a3e);
-    border: 1px solid var(--border-color, #3a3a4e);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    color: var(--text-primary, #fff);
+    color: var(--text-primary);
     box-sizing: border-box;
   }
 
   .form-input:focus {
     outline: none;
-    border-color: var(--accent-color, #d946ef);
+    border-color: var(--accent-color);
   }
 
   .form-hint {
     font-size: var(--font-size-xs, 0.75rem);
-    color: var(--text-secondary, #aaa);
+    color: var(--text-secondary);
     margin-top: 4px;
   }
 
   .form-hint a {
-    color: var(--accent-color, #d946ef);
+    color: var(--accent-color);
   }
 
   .required {
-    color: var(--color-error, #ef4444);
+    color: var(--color-negative);
   }
 
   .btn-sm {

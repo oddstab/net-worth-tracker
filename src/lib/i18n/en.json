@@ -79,7 +79,15 @@
     "month": " months",
     "avgCost": "Avg Cost",
     "marketPrice": "Market Price",
-    "pledge": "Pledge"
+    "pledge": "Pledge",
+    "tdccTop": "Top {percent}%",
+    "tdccLabel": "TDCC Shareholder Distribution",
+    "tdccLevel": "Shareholding Range",
+    "tdccHolders": "Holders",
+    "tdccShares": "Shares",
+    "tdccPercent": "Ratio %",
+    "tdccTopPercent": "Top %",
+    "tdccTotal": "Total"
   },
   "liability": {
     "name": "Name",
@@ -138,6 +146,12 @@
     "manualRefresh": "Manual Price Refresh",
     "manualRefreshDesc": "Execute a one-time price update immediately",
     "refreshing": "Refreshing...",
+    "displayCurrency": "Display Currency",
+    "displayCurrencyDesc": "Switch the display currency for all amounts. Underlying data is not affected.",
+    "rateMapTitle": "Exchange Rate Settings",
+    "rateMapDesc": "Set exchange rates for each currency against TWD",
+    "syncRate": "Sync Rates",
+    "syncing": "Syncing...",
     "language": "Language",
     "about": "About",
     "aboutDesc": "A frontend-only PWA. All data is stored locally on your device and never sent to any server.",
@@ -163,7 +177,18 @@
     "googleNoSheetData": "No asset data in Google Sheets",
     "googleOpenSheet": "Open Google Sheets"
   },
+  "currency": {
+    "TWD": "TWD",
+    "USD": "USD",
+    "CNY": "CNY",
+    "JPY": "JPY",
+    "KRW": "KRW"
+  },
   "toast": {
+    "currencySwitched": "Display currency switched to {currency}",
+    "rateMapUpdated": "Exchange rates updated",
+    "rateSynced": "Exchange rates synced",
+    "rateSyncFailed": "Failed to sync rates, please try again later",
     "rateUpdated": "Exchange rate updated",
     "dataExported": "Data exported",
     "dataImported": "Data imported",
@@ -189,6 +214,7 @@
     "ratePositive": "Exchange rate must be a positive number",
     "amountPositive": "Amount must be a positive number",
     "drawdownExceedsLimit": "Drawdown amount cannot exceed the credit line",
+    "ratePositiveAll": "All exchange rates must be positive numbers",
     "fillRequired": "Please fill in all required fields"
   },
   "summary": {
@@ -232,7 +258,10 @@
   "pwa": {
     "updateAvailable": "A new version is available. Update now?",
     "update": "Update",
-    "dismiss": "Later"
+    "dismiss": "Later",
+    "install": "Install to Home Screen",
+    "installed": "Installed to Home Screen!",
+    "notSupported": "Your browser does not support installation, or already installed"
   },
   "tools": {
     "title": "Calculator Toolbox",

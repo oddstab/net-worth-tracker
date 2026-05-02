@@ -9,7 +9,7 @@
   import { onMount, onDestroy, afterUpdate } from 'svelte';
   import { Chart, DoughnutController, ArcElement, Tooltip } from 'chart.js';
   import { t } from '$lib/services/i18n.js';
-  import { formatCurrency, formatPercent } from '$lib/services/localeFormatter.js';
+  import { formatCurrency, formatCompact as formatCompactUtil, formatPercent } from '$lib/services/localeFormatter.js';
   import { growthRates } from '$lib/stores/derived.js';
   import { assets as assetsStore } from '$lib/stores/assets.js';
   import { liabilities as liabilitiesStore } from '$lib/stores/liabilities.js';
@@ -39,22 +39,10 @@
 
   /**
    * 格式化淨資產為簡潔萬元格式
+   * 使用 localeFormatter 的 formatCompact，已內建貨幣換算邏輯
    */
   function formatCompact(value) {
-    const abs = Math.abs(value);
-    if (abs >= 10000) {
-      try {
-        return new Intl.NumberFormat($locale, {
-          style: 'currency',
-          currency: 'TWD',
-          notation: 'compact',
-          maximumFractionDigits: 0,
-        }).format(value);
-      } catch {
-        // fallback
-      }
-    }
-    return formatCurrency(value);
+    return formatCompactUtil(value);
   }
 
   function renderChart() {

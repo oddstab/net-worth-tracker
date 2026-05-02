@@ -13,6 +13,7 @@
   import { calculateLoanSchedule, calculateEqualPrincipalSchedule } from '$lib/utils/calculator.js';
   import { showConfirmDialog } from '$lib/stores/confirmDialog.js';
   import { liabilities } from '$lib/stores/liabilities.js';
+  import { assets } from '$lib/stores/assets.js';
   import { showToast } from '$lib/stores/toast.js';
   import { createEventDispatcher } from 'svelte';
   import Icon from '../Icon.svelte';
@@ -38,6 +39,22 @@
 
   /** TWD 值 */
   $: twdValue = liability.amount * (liability.currency === 'USD' ? exchangeRate : 1);
+
+  /** 質押負債：即時核准額度（根據資產市值計算） */
+  $: isPledge = liability.category === 'pledge';
+  $: pledgeSymbol = isPledge ? liability.name : '';
+  $: pledgeMarketValue = isPledge
+    ? $assets
+        .filter(a => a.type === 'tw_stock' && a.symbol === pledgeSymbol)
+        .reduce((sum, a) => {
+          const shares = Math.floor(a.quantity / 1000) * 1000;
+          return sum + shares * a.pricePerUnit;
+        }, 0)
+    : 0;
+  /** 即時核准額度 = 可質押市值的 60% */
+  $: liveCreditLine = isPledge ? Math.round(pledgeMarketValue * 0.6) : liability.creditLine;
+  /** 已借佔可質押市值百分比 */
+  $: borrowedPercent = pledgeMarketValue > 0 ? (twdValue / pledgeMarketValue * 100).toFixed(1) : '0.0';
 
   /** 還款明細是否展開 */
   let scheduleExpanded = false;
@@ -115,7 +132,7 @@
   // ─── 格式化 ────────────────────────────────────────────────────────────
 
   function fmt(n) {
-    return Math.round(n).toLocaleString('zh-TW');
+    return formatCurrency(Math.round(n));
   }
 
   /** 計算月份（從起始日期推算） */
@@ -192,7 +209,12 @@
       {/if}
 
       {#if isRevolving}
-        {#if liability.creditLine}
+        {#if isPledge}
+          <span class="liability-tag">{t('liability.creditLineLabel')} {formatCurrency(liveCreditLine)}</span>
+          <span class="liability-tag" style="color: {parseFloat(borrowedPercent) > 60 ? 'var(--color-negative)' : parseFloat(borrowedPercent) > 40 ? 'var(--color-warning)' : 'var(--accent-color)'}">
+            {t('liability.drawdownRatio')} {borrowedPercent}%
+          </span>
+        {:else if liability.creditLine}
           <span class="liability-tag">{t('liability.creditLineLabel')} {formatCurrency(liability.creditLine)}</span>
         {/if}
         {#if liability.drawdownDate || liability.startDate}
@@ -318,7 +340,12 @@
             <span class="loan-summary-label">{t('liability.interestRate')}</span>
             <span class="loan-summary-value">{liability.interestRate}%</span>
           </div>
-          {#if liability.creditLine}
+          {#if isPledge}
+            <div class="loan-summary-item">
+              <span class="loan-summary-label">{t('liability.creditLine')}</span>
+              <span class="loan-summary-value">{formatCurrency(liveCreditLine)}</span>
+            </div>
+          {:else if liability.creditLine}
             <div class="loan-summary-item">
               <span class="loan-summary-label">{t('liability.creditLine')}</span>
               <span class="loan-summary-value">{formatCurrency(liability.creditLine)}</span>

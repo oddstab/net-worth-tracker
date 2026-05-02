@@ -5,10 +5,12 @@
  * 使用相同的 localStorage key（nwt_ 前綴），確保資料向後相容。
  *
  * localStorage keys:
- *   nwt_assets        — Asset[]
- *   nwt_liabilities   — Liability[]
- *   nwt_exchange_rate — number
- *   nwt_snapshots     — Snapshot[]
+ *   nwt_assets             — Asset[]
+ *   nwt_liabilities        — Liability[]
+ *   nwt_exchange_rate      — number
+ *   nwt_snapshots          — Snapshot[]
+ *   nwt_display_currency   — string（顯示貨幣代碼）
+ *   nwt_exchange_rate_map  — object（多幣別匯率對照表）
  */
 
 /** localStorage key 常數 */
@@ -17,10 +19,23 @@ const KEYS = {
   LIABILITIES: 'nwt_liabilities',
   EXCHANGE_RATE: 'nwt_exchange_rate',
   SNAPSHOTS: 'nwt_snapshots',
+  DISPLAY_CURRENCY: 'nwt_display_currency',
+  EXCHANGE_RATE_MAP: 'nwt_exchange_rate_map',
 };
 
 /** 預設匯率（USD/TWD） */
 const DEFAULT_EXCHANGE_RATE = 31.5;
+
+/** 預設顯示貨幣 */
+const DEFAULT_DISPLAY_CURRENCY = 'TWD';
+
+/** 預設多幣別匯率對照表（1 外幣 = X TWD） */
+const DEFAULT_EXCHANGE_RATE_MAP = {
+  USD: 31.5,
+  CNY: 4.35,
+  JPY: 0.21,
+  KRW: 0.023,
+};
 
 // ─── 通用讀寫輔助 ────────────────────────────────────────────────────────────
 
@@ -110,6 +125,44 @@ export function saveExchangeRate(rate) {
  */
 export function loadExchangeRate() {
   return readItem(KEYS.EXCHANGE_RATE, DEFAULT_EXCHANGE_RATE);
+}
+
+// ─── 顯示貨幣 ────────────────────────────────────────────────────────────────
+
+/**
+ * 將顯示貨幣代碼存入 localStorage。
+ * @param {string} currency — 貨幣代碼（如 'TWD'、'USD'）
+ */
+export function saveDisplayCurrency(currency) {
+  writeItem(KEYS.DISPLAY_CURRENCY, currency);
+}
+
+/**
+ * 從 localStorage 讀取顯示貨幣代碼。
+ * 若無資料或資料損壞，回傳預設值 'TWD'。
+ * @returns {string}
+ */
+export function loadDisplayCurrency() {
+  return readItem(KEYS.DISPLAY_CURRENCY, DEFAULT_DISPLAY_CURRENCY);
+}
+
+// ─── 匯率對照表 ──────────────────────────────────────────────────────────────
+
+/**
+ * 將多幣別匯率對照表存入 localStorage。
+ * @param {Record<string, number>} rateMap — 匯率對照表（如 { USD: 31.5, CNY: 4.35 }）
+ */
+export function saveExchangeRateMap(rateMap) {
+  writeItem(KEYS.EXCHANGE_RATE_MAP, rateMap);
+}
+
+/**
+ * 從 localStorage 讀取多幣別匯率對照表。
+ * 若無資料或資料損壞，回傳預設匯率對照表。
+ * @returns {Record<string, number>}
+ */
+export function loadExchangeRateMap() {
+  return readItem(KEYS.EXCHANGE_RATE_MAP, DEFAULT_EXCHANGE_RATE_MAP);
 }
 
 // ─── 快照 ────────────────────────────────────────────────────────────────────

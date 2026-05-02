@@ -79,7 +79,15 @@
     "month": "ヶ月",
     "avgCost": "平均コスト",
     "marketPrice": "市場価格",
-    "pledge": "担保"
+    "pledge": "担保",
+    "tdccTop": "上位 {percent}%",
+    "tdccLabel": "株主分布表",
+    "tdccLevel": "保有株数区分",
+    "tdccHolders": "人数",
+    "tdccShares": "株数",
+    "tdccPercent": "構成比 %",
+    "tdccTopPercent": "上位 %",
+    "tdccTotal": "合　計"
   },
   "liability": {
     "name": "名称",
@@ -138,6 +146,12 @@
     "manualRefresh": "手動で株価更新",
     "manualRefreshDesc": "株価更新を即座に実行",
     "refreshing": "更新中...",
+    "displayCurrency": "表示通貨",
+    "displayCurrencyDesc": "すべての金額の表示通貨を切り替えます。基礎データには影響しません。",
+    "rateMapTitle": "為替レート設定",
+    "rateMapDesc": "各通貨のTWDに対する為替レートを設定",
+    "syncRate": "レート同期",
+    "syncing": "同期中...",
     "language": "言語設定",
     "about": "このアプリについて",
     "aboutDesc": "フロントエンドのみのPWA。すべてのデータはローカルデバイスに保存され、サーバーには送信されません。",
@@ -163,7 +177,18 @@
     "googleNoSheetData": "Google Sheetsに資産データがありません",
     "googleOpenSheet": "Google Sheetsを開く"
   },
+  "currency": {
+    "TWD": "台湾ドル",
+    "USD": "米ドル",
+    "CNY": "人民元",
+    "JPY": "日本円",
+    "KRW": "韓国ウォン"
+  },
   "toast": {
+    "currencySwitched": "表示通貨を {currency} に切り替えました",
+    "rateMapUpdated": "為替レートを更新しました",
+    "rateSynced": "為替レートを同期しました",
+    "rateSyncFailed": "為替レートの同期に失敗しました。後でもう一度お試しください",
     "rateUpdated": "為替レートを更新しました",
     "dataExported": "データをエクスポートしました",
     "dataImported": "データをインポートしました",
@@ -189,6 +214,7 @@
     "ratePositive": "為替レートは正の数でなければなりません",
     "amountPositive": "金額は正の数でなければなりません",
     "drawdownExceedsLimit": "借入金額は融資枠を超えることはできません",
+    "ratePositiveAll": "すべての為替レートは正の数でなければなりません",
     "fillRequired": "すべての必須項目を入力してください"
   },
   "summary": {
@@ -232,7 +258,10 @@
   "pwa": {
     "updateAvailable": "新しいバージョンが利用可能です。今すぐ更新しますか？",
     "update": "更新",
-    "dismiss": "後で"
+    "dismiss": "後で",
+    "install": "ホーム画面に追加",
+    "installed": "ホーム画面に追加しました！",
+    "notSupported": "このブラウザはインストールに対応していないか、既にインストール済みです"
   },
   "tools": {
     "title": "計算ツールボックス",

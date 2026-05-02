@@ -642,3 +642,112 @@ describe('Property 19: 圓餅圖百分比加總', () => {
     );
   });
 });
+
+// ─── Feature: currency-switcher, Property 5: 顯示層不影響底層資料 ────────────
+// **Validates: Requirements 6.1, 6.2**
+describe('Property 5: 顯示層不影響底層資料', { timeout: 30000 }, () => {
+  /** 支援的貨幣代碼 */
+  const currencyArb = fc.constantFrom('TWD', 'USD', 'CNY', 'JPY', 'KRW');
+
+  /** 產生有效的快照物件 */
+  const snapshotArb = fc.record({
+    date: fc.date({ min: new Date('2020-01-01'), max: new Date('2030-12-31') })
+      .map(d => d.toISOString().slice(0, 10)),
+    netWorth: fc.double({ min: -1e8, max: 1e8, noNaN: true, noDefaultInfinity: true })
+      .map(v => Object.is(v, -0) ? 0 : v),
+  });
+
+  it('calculateTotals 輸出不受 displayCurrency 設定影響', () => {
+    fc.assert(
+      fc.property(
+        fc.array(assetArb, { minLength: 0, maxLength: 10 }),
+        fc.array(liabilityArb, { minLength: 0, maxLength: 10 }),
+        exchangeRateArb,
+        currencyArb,
+        currencyArb,
+        (assets, liabilities, rate, currency1, currency2) => {
+          // 設定第一種顯示貨幣
+          localStorage.setItem('nwt_display_currency', JSON.stringify(currency1));
+          const result1 = calculateTotals(assets, liabilities, rate);
+
+          // 切換為第二種顯示貨幣
+          localStorage.setItem('nwt_display_currency', JSON.stringify(currency2));
+          const result2 = calculateTotals(assets, liabilities, rate);
+
+          // 兩次計算結果應完全相同（純函式不受 displayCurrency 影響）
+          return (
+            result1.investmentTotal === result2.investmentTotal &&
+            result1.liquidTotal === result2.liquidTotal &&
+            result1.totalAssets === result2.totalAssets &&
+            result1.totalLiabilities === result2.totalLiabilities &&
+            result1.netWorth === result2.netWorth
+          );
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('calculateGrowthRates 輸出不受 displayCurrency 設定影響', () => {
+    fc.assert(
+      fc.property(
+        fc.array(snapshotArb, { minLength: 2, maxLength: 10 }),
+        currencyArb,
+        currencyArb,
+        (snapshots, currency1, currency2) => {
+          // 設定第一種顯示貨幣
+          localStorage.setItem('nwt_display_currency', JSON.stringify(currency1));
+          const result1 = calculateGrowthRates(snapshots);
+
+          // 切換為第二種顯示貨幣
+          localStorage.setItem('nwt_display_currency', JSON.stringify(currency2));
+          const result2 = calculateGrowthRates(snapshots);
+
+          // 兩次計算結果應完全相同（純函式不受 displayCurrency 影響）
+          return (
+            result1.monthlyGrowthRate === result2.monthlyGrowthRate &&
+            result1.dailyGrowthRate === result2.dailyGrowthRate &&
+            result1.estimatedMonthlyRate === result2.estimatedMonthlyRate
+          );
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+
+  it('localStorage 中的資產與負債資料不受 displayCurrency 切換影響', () => {
+    fc.assert(
+      fc.property(
+        fc.array(assetArb, { minLength: 0, maxLength: 10 }),
+        fc.array(liabilityArb, { minLength: 0, maxLength: 10 }),
+        snapshotArb,
+        currencyArb,
+        (assets, liabilities, snapshot, currency) => {
+          // 先清除 localStorage
+          localStorage.clear();
+
+          // 儲存資料至 localStorage
+          localStorage.setItem('nwt_assets', JSON.stringify(assets));
+          localStorage.setItem('nwt_liabilities', JSON.stringify(liabilities));
+          localStorage.setItem('nwt_snapshots', JSON.stringify([snapshot]));
+
+          // 切換顯示貨幣
+          localStorage.setItem('nwt_display_currency', JSON.stringify(currency));
+
+          // 驗證底層資料未被修改
+          const storedAssets = JSON.parse(localStorage.getItem('nwt_assets'));
+          const storedLiabilities = JSON.parse(localStorage.getItem('nwt_liabilities'));
+          const storedSnapshots = JSON.parse(localStorage.getItem('nwt_snapshots'));
+
+          // 資料應與原始輸入完全相同
+          return (
+            JSON.stringify(storedAssets) === JSON.stringify(assets) &&
+            JSON.stringify(storedLiabilities) === JSON.stringify(liabilities) &&
+            JSON.stringify(storedSnapshots) === JSON.stringify([snapshot])
+          );
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+});
