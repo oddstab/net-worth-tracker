@@ -242,7 +242,9 @@
     <div class="modal-header">
       <h2 class="modal-title" id="asset-modal-title">
         {isEdit ? t('asset.editAsset') : t('asset.addAsset')}
-        {#if isPreset}
+        {#if isEdit && asset.symbol}
+          <span style="font-size: var(--font-size-sm); color: var(--text-secondary); font-weight: 400;">— {asset.symbol} {asset.name}</span>
+        {:else if isPreset}
           <span style="font-size: var(--font-size-sm); color: var(--text-secondary); font-weight: 400;">— {preset.symbol} {preset.name}</span>
         {/if}
       </h2>
@@ -295,24 +297,6 @@
                 disabled={isLocked}
                 on:select={handleSearchSelect}
               />
-            {/if}
-
-            <!-- 名稱（僅編輯模式顯示，新增時由搜尋自動帶入） -->
-            {#if isEdit}
-            <div class="form-group">
-              <label class="form-label" for="asset-name">
-                {t('asset.name')} 🔒
-              </label>
-              <input
-                class="form-input"
-                type="text"
-                id="asset-name"
-                bind:value={name}
-                autocomplete="off"
-                required
-                disabled
-              />
-            </div>
             {/if}
 
             <!-- 數量 + 平均成本 -->
