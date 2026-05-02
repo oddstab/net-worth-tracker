@@ -10,7 +10,7 @@
  * 因此 App Shell 清單改為動態快取（不預快取具體路徑）。
  */
 
-const CACHE_NAME = 'nwt-app-shell-v6';
+const CACHE_NAME = 'nwt-app-shell-v7';
 
 /** URL patterns that should use Network First strategy */
 const NETWORK_FIRST_PATTERNS = [
