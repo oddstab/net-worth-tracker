@@ -278,7 +278,9 @@
 <div class="modal-overlay" role="presentation">
   <div class="modal" role="dialog" aria-modal="true">
     <div class="modal-header">
-      <h2 class="modal-title"><Icon name="bank" size={20}/> {t('asset.pledge')} - {symbol} {name}</h2>
+      <h2 class="modal-title">{t('asset.pledge')}
+        <span style="font-size: var(--font-size-sm); color: var(--text-secondary); font-weight: 400;">— {symbol} {name}</span>
+      </h2>
       <button class="modal-close" on:click={handleClose}><Icon name="x" size={18}/></button>
     </div>
 
