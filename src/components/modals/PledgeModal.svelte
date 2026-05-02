@@ -115,6 +115,12 @@
     updatingFrom = '';
   }
 
+  /** 質押成數失焦 → 空值歸零並觸發連動計算 */
+  function onPledgeRatioBlur() {
+    pledgeRatio = parseFloat(pledgeRatio) || 0;
+    onPledgeRatioChange();
+  }
+
   /** 借款金額失焦 → 限制範圍（空值歸零） */
   function onLoanInputBlur() {
     const maxLoan = Math.max(maxAvailable, 0);
@@ -346,7 +352,7 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">{t('tools.pledgeRatio')}</label>
-          <input class="form-input" type="number" bind:value={pledgeRatio} on:change={onPledgeRatioChange} min="1" max="60" step="0.01" disabled={!canPledge} />
+          <input class="form-input" type="number" bind:value={pledgeRatio} on:change={onPledgeRatioChange} on:blur={onPledgeRatioBlur} min="1" max="60" step="0.01" disabled={!canPledge} />
         </div>
         <div class="form-group">
           <label class="form-label">{t('tools.loanAmountLimit', { limit: formatCurrency(maxAvailable) })}</label>
