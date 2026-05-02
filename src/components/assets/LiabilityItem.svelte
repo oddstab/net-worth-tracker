@@ -84,6 +84,23 @@
   /** 等額本息月付金 */
   $: monthlyPaymentA = loanA.length > 0 ? loanA[0].monthlyPayment : 0;
 
+  /** 已繳期數（從起始日期算到今天） */
+  $: paidTerms = (() => {
+    if (!liability.startDate || !isInstallment) return 0;
+    const start = new Date(liability.startDate);
+    const now = new Date();
+    const months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+    return Math.max(0, Math.min(months, liability.terms));
+  })();
+
+  /** 剩餘本金（根據已繳期數從還款明細取得） */
+  $: remainingBalance = (() => {
+    if (!isInstallment || paidTerms <= 0) return liability.amount;
+    const schedule = loanMode === 'equal-payment' ? loanA : loanB;
+    if (paidTerms >= schedule.length) return 0;
+    return Math.round(schedule[paidTerms - 1].remainingBalance);
+  })();
+
   /** 等額本息總利息 */
   $: totalInterestA = loanA.length > 0 ? loanA[loanA.length - 1].cumulativeInterest : 0;
 
@@ -186,7 +203,16 @@
       </div>
     </div>
 
-    <div class="liability-item-value">{formatCurrency(twdValue)}</div>
+    <div class="liability-item-value">
+      {#if isInstallment && paidTerms > 0}
+        {formatCurrency(remainingBalance)}
+        <span style="font-size: var(--font-size-xs); color: var(--text-muted); font-weight: 400; margin-left: 4px;">
+          （{paidTerms}/{liability.terms} {t('asset.month')}）
+        </span>
+      {:else}
+        {formatCurrency(twdValue)}
+      {/if}
+    </div>
 
     <!-- 標籤列 -->
     <div class="liability-tags">
