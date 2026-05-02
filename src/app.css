@@ -712,6 +712,11 @@ body {
     right: max(12px, calc((100% - 420px) / 2));
     z-index: 101;
   }
+
+  /* 安裝橫幅顯示時 FAB 往上移，避免被擋住 */
+  .fab-container.fab-shifted {
+    bottom: 130px;
+  }
 }
 
 .fab-menu {

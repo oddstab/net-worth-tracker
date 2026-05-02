@@ -14,6 +14,9 @@
   import { requestAddAsset, requestAddLiability } from '$lib/stores/modalState.js';
   import Icon from './Icon.svelte';
 
+  /** 安裝橫幅是否顯示（FAB 需往上移） */
+  export let installBannerVisible = false;
+
   /** 選單是否展開 */
   let menuOpen = false;
 
@@ -55,7 +58,7 @@
 <!-- 點擊頁面其他區域時關閉選單 -->
 <svelte:window on:click={closeMenu} />
 
-<div class="fab-container">
+<div class="fab-container" class:fab-shifted={installBannerVisible}>
   {#if menuOpen}
     <div class="fab-menu" role="menu">
       <button

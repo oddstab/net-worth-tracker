@@ -251,7 +251,7 @@
   <main class="main-content {transitionClass}" on:touchstart={handleTouchStart} on:touchend={handleTouchEnd}>
     <slot />
   </main>
-  <FAB />
+  <FAB installBannerVisible={showInstallBanner} />
 {/key}
 <Toast />
 <ConfirmDialog />
@@ -326,22 +326,42 @@
   /* ── PWA 安裝橫幅 ── */
   .pwa-install-banner {
     position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 70px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
     background: var(--accent-color, #4fc3f7);
     color: var(--color-bg, #0f0f1a);
     padding: 10px 16px;
-    border-radius: 12px;
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     z-index: 9998;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    font-size: 0.85rem;
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.3);
+    font-size: 0.82rem;
     font-weight: 600;
-    max-width: calc(100vw - 32px);
-    animation: slideUp 0.3s ease-out;
+  }
+
+  /* 電腦版：限制寬度、置中、加圓角 */
+  @media (min-width: 768px) {
+    .pwa-install-banner {
+      max-width: 480px;
+      border-radius: 12px;
+      bottom: 24px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  /* Modal 開啟時隱藏安裝橫幅，避免擋到操作 */
+  :global(body.modal-open) .pwa-install-banner {
+    display: none;
+  }
+
+  .pwa-install-banner span {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .pwa-install-btn {
@@ -352,8 +372,8 @@
     border-radius: 8px;
     cursor: pointer;
     font-weight: 600;
-    font-size: 0.85rem;
-    min-height: 34px;
+    font-size: 0.82rem;
+    min-height: 32px;
     white-space: nowrap;
     flex-shrink: 0;
   }
@@ -367,10 +387,10 @@
     border: none;
     color: var(--color-bg, #0f0f1a);
     cursor: pointer;
-    padding: 4px;
+    padding: 2px;
     line-height: 1;
-    min-width: 28px;
-    min-height: 28px;
+    min-width: 24px;
+    min-height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -378,8 +398,8 @@
   }
 
   @keyframes slideUp {
-    from { transform: translateX(-50%) translateY(20px); opacity: 0; }
-    to   { transform: translateX(-50%) translateY(0); opacity: 1; }
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
   }
 
   /* ── 頁面滑動過渡動畫 ── */
