@@ -30,13 +30,37 @@ export function calculateAssetTWD(quantity, pricePerUnit, currency, exchangeRate
 
 /**
  * 將負債項目換算為 TWD 值。
+ * 分期型負債（信貸/房貸）若有起始日期和期數，會根據已繳期數計算剩餘本金。
  *
- * @param {{ amount: number, currency: string }} liability  負債項目
+ * @param {{ amount: number, currency: string, category?: string, interestRate?: number, terms?: number, startDate?: string }} liability  負債項目
  * @param {number} exchangeRate  USD/TWD 匯率
  * @returns {number} 負債的 TWD 值
  */
 function liabilityToTWD(liability, exchangeRate) {
   const rate = liability.currency === 'USD' ? exchangeRate : 1;
+
+  // 分期型負債：根據已繳期數計算剩餘本金
+  const isInstallment = (liability.category === 'credit' || liability.category === 'home_loan')
+    && liability.interestRate && liability.terms && liability.startDate;
+
+  if (isInstallment) {
+    const start = new Date(liability.startDate);
+    const now = new Date();
+    const paidTerms = Math.max(0, Math.min(
+      (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()),
+      liability.terms
+    ));
+
+    if (paidTerms > 0 && paidTerms < liability.terms) {
+      const schedule = calculateLoanSchedule(liability.amount, liability.interestRate, liability.terms);
+      if (schedule.length >= paidTerms) {
+        return Math.round(schedule[paidTerms - 1].remainingBalance) * rate;
+      }
+    } else if (paidTerms >= liability.terms) {
+      return 0; // 已繳完
+    }
+  }
+
   return liability.amount * rate;
 }
 
