@@ -56,6 +56,8 @@
   /** 質押成數改變 → 更新維持率 + 借款金額 */
   function onPledgeRatioChange() {
     if (updatingFrom) return;
+    // 若使用者正在清空輸入，不強制覆蓋
+    if (pledgeRatio === '' || pledgeRatio === null || Number.isNaN(Number(pledgeRatio))) return;
     updatingFrom = 'pledge';
     const safeMax = Math.max(maxAvailable, 0);
     const maxRatio = pledgeableMarketValue > 0
@@ -98,6 +100,8 @@
   /** 借款金額改變 → 更新質押成數 + 維持率（輸入中不取整） */
   function onLoanInputChange() {
     if (updatingFrom) return;
+    // 若使用者正在清空輸入，不強制覆蓋
+    if (loanInput === '' || loanInput === null || Number.isNaN(Number(loanInput))) return;
     updatingFrom = 'loan';
     const maxLoan = Math.max(maxAvailable, 0);
     const val = Math.min(Math.max(loanInput || 0, 0), maxLoan);
@@ -111,10 +115,10 @@
     updatingFrom = '';
   }
 
-  /** 借款金額失焦 → 限制範圍 */
+  /** 借款金額失焦 → 限制範圍（空值歸零） */
   function onLoanInputBlur() {
     const maxLoan = Math.max(maxAvailable, 0);
-    loanInput = Math.min(Math.max(loanInput || 0, 0), maxLoan);
+    loanInput = Math.min(Math.max(parseFloat(loanInput) || 0, 0), maxLoan);
     onLoanInputChange();
   }
 
@@ -341,11 +345,11 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">{t('tools.pledgeRatio')}</label>
-          <input class="form-input" type="number" bind:value={pledgeRatio} on:input={onPledgeRatioChange} min="1" max="60" step="0.01" disabled={!canPledge} />
+          <input class="form-input" type="number" bind:value={pledgeRatio} on:change={onPledgeRatioChange} min="1" max="60" step="0.01" disabled={!canPledge} />
         </div>
         <div class="form-group">
           <label class="form-label">{t('tools.loanAmountLimit', { limit: formatCurrency(maxAvailable) })}</label>
-          <input class="form-input" type="number" bind:value={loanInput} on:input={onLoanInputChange} on:blur={onLoanInputBlur} min="0" max={maxAvailable} step="1000" disabled={!canPledge} />
+          <input class="form-input" type="number" bind:value={loanInput} on:change={onLoanInputChange} on:blur={onLoanInputBlur} min="0" max={maxAvailable} step="1000" disabled={!canPledge} />
         </div>
       </div>
       {#if isOverLimit}
