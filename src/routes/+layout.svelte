@@ -110,7 +110,6 @@
   let waitingWorker = null;
 
   /** PWA 安裝提示 */
-  let showInstallPrompt = false;
   let deferredInstallPrompt = null;
 
   /** 價格系統控制物件 */
@@ -122,12 +121,11 @@
   onMount(() => {
     registerServiceWorker();
 
-    // 監聽 PWA 安裝提示
+    // 監聯 PWA 安裝提示（儲存事件供設定頁使用）
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredInstallPrompt = e;
-      // 延遲 3 秒顯示，避免一進來就彈
-      setTimeout(() => { showInstallPrompt = true; }, 3000);
+      window.__pwaInstallPrompt = e;
     });
 
     // 初始化價格系統：自動更新台股/加密貨幣市場價格
@@ -211,21 +209,6 @@
   function dismissUpdate() {
     showUpdatePrompt = false;
   }
-
-  /** 使用者點擊安裝 PWA */
-  async function installPWA() {
-    if (!deferredInstallPrompt) return;
-    deferredInstallPrompt.prompt();
-    const { outcome } = await deferredInstallPrompt.userChoice;
-    deferredInstallPrompt = null;
-    showInstallPrompt = false;
-  }
-
-  /** 使用者忽略安裝提示 */
-  function dismissInstall() {
-    showInstallPrompt = false;
-    deferredInstallPrompt = null;
-  }
 </script>
 
 {#key localeKey}
@@ -243,14 +226,6 @@
     <span>有新版本可用！</span>
     <button class="sw-update-btn" on:click={applyUpdate}>立即更新</button>
     <button class="sw-update-dismiss" on:click={dismissUpdate} aria-label="關閉"><Icon name="x" size={16}/></button>
-  </div>
-{/if}
-
-{#if showInstallPrompt}
-  <div class="pwa-install-banner" role="alert">
-    <span>📱 安裝到主畫面，享受更好的體驗</span>
-    <button class="pwa-install-btn" on:click={installPWA}>安裝</button>
-    <button class="pwa-install-dismiss" on:click={dismissInstall} aria-label="關閉"><Icon name="x" size={16}/></button>
   </div>
 {/if}
 
@@ -333,51 +308,5 @@
   @keyframes slideInRight {
     from { opacity: 0; }
     to   { opacity: 1; }
-  }
-
-  /* ── PWA 安裝提示 ── */
-  .pwa-install-banner {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--accent-color);
-    color: #fff;
-    padding: 12px 20px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    z-index: 9999;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    font-size: 0.9rem;
-    font-weight: 600;
-    white-space: nowrap;
-  }
-  .pwa-install-btn {
-    background: #fff;
-    color: var(--accent-color);
-    border: none;
-    padding: 6px 16px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.85rem;
-    min-height: 36px;
-  }
-  .pwa-install-btn:hover { opacity: 0.9; }
-  .pwa-install-dismiss {
-    background: none;
-    border: none;
-    color: #fff;
-    cursor: pointer;
-    font-size: 1.1rem;
-    padding: 4px;
-    line-height: 1;
-    min-width: 28px;
-    min-height: 28px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
 </style>
