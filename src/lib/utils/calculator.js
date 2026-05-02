@@ -575,7 +575,7 @@ export function calculateAssetBreakdown(assets, liabilities, exchangeRate) {
 
   const liabilityItems = liabilities
     .map(l => {
-      const amount = l.amount * (l.currency === 'USD' ? exchangeRate : 1);
+      const amount = liabilityToTWD(l, exchangeRate);
       return {
         name: l.name || '未命名負債',
         amount,
