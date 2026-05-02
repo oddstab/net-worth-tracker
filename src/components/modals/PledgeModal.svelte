@@ -247,7 +247,8 @@
   }
 
   function handleSubmit() {
-    if (loanInput <= 0 || !canPledge) return;
+    if (!loanInput || loanInput <= 0 || !canPledge) return;
+    if (!pledgeRatio || Number.isNaN(Number(pledgeRatio))) return;
 
     liabilities.addLiability({
       id: crypto.randomUUID(),
@@ -403,8 +404,8 @@
 
     <div class="modal-footer">
       <button class="btn btn-secondary" on:click={handleClose}>{t('common.cancel')}</button>
-      <button class="btn btn-primary" on:click={handleSubmit} disabled={loanInput <= 0 || !canPledge}>
-        {t('asset.pledge')} {formatCurrency(loanInput)}
+      <button class="btn btn-primary" on:click={handleSubmit} disabled={!loanInput || loanInput <= 0 || !canPledge || !pledgeRatio || Number.isNaN(Number(pledgeRatio))}>
+        {t('asset.pledge')} {formatCurrency(loanInput || 0)}
       </button>
     </div>
   </div>
