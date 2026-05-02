@@ -164,7 +164,6 @@ body {
   line-height: 1.5;
   min-height: 100vh;
   -webkit-tap-highlight-color: transparent;
-  overflow-x: hidden;
 }
 
 /* ── Utility Classes ── */
