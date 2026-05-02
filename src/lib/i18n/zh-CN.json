@@ -126,7 +126,8 @@
     "loanDate": "借款日",
     "repayDate": "还款日",
     "creditLineLabel": "额度",
-    "drawdownLabel": "动用"
+    "drawdownLabel": "动用",
+    "paidAmount": "已还"
   },
   "settings": {
     "exchangeRate": "汇率设置",

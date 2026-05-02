@@ -126,7 +126,8 @@
     "loanDate": "대출일",
     "repayDate": "상환일",
     "creditLineLabel": "한도",
-    "drawdownLabel": "인출"
+    "drawdownLabel": "인출",
+    "paidAmount": "상환 완료"
   },
   "settings": {
     "exchangeRate": "환율 설정",

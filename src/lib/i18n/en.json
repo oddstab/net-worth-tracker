@@ -126,7 +126,8 @@
     "loanDate": "Loan Date",
     "repayDate": "Repay Date",
     "creditLineLabel": "Credit Line",
-    "drawdownLabel": "Drawdown"
+    "drawdownLabel": "Drawdown",
+    "paidAmount": "Paid"
   },
   "settings": {
     "exchangeRate": "Exchange Rate",

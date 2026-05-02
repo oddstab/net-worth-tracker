@@ -16,6 +16,7 @@
   import { assets } from '$lib/stores/assets.js';
   import { showToast } from '$lib/stores/toast.js';
   import { createEventDispatcher } from 'svelte';
+  import { tick } from 'svelte';
   import Icon from '../Icon.svelte';
 
   const dispatch = createEventDispatcher();
@@ -59,6 +60,9 @@
   /** 還款明細是否展開 */
   let scheduleExpanded = false;
 
+  /** 還款明細表容器參考（用於自動滾動到高亮列） */
+  let loanTableWrap;
+
   /** 攤還方式：'equal-payment' | 'equal-principal' */
   let loanMode = 'equal-payment';
 
@@ -100,6 +104,11 @@
     if (paidTerms >= schedule.length) return 0;
     return Math.round(schedule[paidTerms - 1].remainingBalance);
   })();
+
+  /** 已還金額 = 原始金額 - 剩餘本金 */
+  $: paidAmount = isInstallment && paidTerms > 0
+    ? liability.amount - remainingBalance
+    : 0;
 
   /** 等額本息總利息 */
   $: totalInterestA = loanA.length > 0 ? loanA[loanA.length - 1].cumulativeInterest : 0;
@@ -162,8 +171,18 @@
 
   // ─── 事件處理 ──────────────────────────────────────────────────────────
 
-  function toggleSchedule() {
+  async function toggleSchedule() {
     scheduleExpanded = !scheduleExpanded;
+    if (scheduleExpanded && paidTerms > 0) {
+      await tick();
+      // 滾動到高亮列（目前繳款月份）
+      if (loanTableWrap) {
+        const highlighted = loanTableWrap.querySelector('.loan-current-period');
+        if (highlighted) {
+          highlighted.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }
+      }
+    }
   }
 
   function switchLoanMode(mode) {
@@ -232,6 +251,9 @@
         {/if}
         <span class="liability-tag liability-tag-accent">{t('liability.monthlyPayment')} {formatCurrency(monthlyPaymentA)}</span>
         <span class="liability-tag liability-tag-danger">{t('liability.totalInterest')} {formatCurrency(totalInterestA)}</span>
+        {#if paidTerms > 0 && paidAmount > 0}
+          <span class="liability-tag liability-tag-positive">{t('liability.paidAmount')} {formatCurrency(paidAmount)}</span>
+        {/if}
       {/if}
 
       {#if isRevolving}
@@ -323,7 +345,7 @@
         </div>
 
         <!-- 還款明細表 -->
-        <div class="loan-table-wrap">
+        <div class="loan-table-wrap" bind:this={loanTableWrap}>
           <table class="loan-table">
             <thead>
               <tr>
@@ -338,7 +360,7 @@
             </thead>
             <tbody>
               {#each currentSchedule as row}
-                <tr>
+                <tr class:loan-current-period={paidTerms > 0 && row.period === paidTerms}>
                   <td>{row.period}</td>
                   {#if liability.startDate}<td>{getMonthLabel(row.period)}</td>{/if}
                   <td>{fmt(row.principalPart)}</td>

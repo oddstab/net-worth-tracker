@@ -2378,6 +2378,12 @@ body.modal-open {
   font-weight: 600;
 }
 
+.liability-tag-positive {
+  color: var(--color-positive);
+  background-color: rgba(74, 222, 128, 0.15);
+  font-weight: 600;
+}
+
 /* ── 還款明細 ── */
 .loan-schedule {
   margin-top: var(--spacing-md);
@@ -2545,6 +2551,16 @@ body.modal-open {
 
 .loan-table tbody tr:hover {
   background: var(--bg-hover);
+}
+
+/* 目前繳款月份高亮 */
+.loan-table tbody tr.loan-current-period {
+  background: var(--accent-light);
+}
+
+.loan-table tbody tr.loan-current-period td {
+  color: var(--accent-color);
+  font-weight: 600;
 }
 
 /* ── 循環型計息計算器 ── */

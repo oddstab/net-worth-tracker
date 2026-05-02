@@ -126,7 +126,8 @@
     "loanDate": "借入日",
     "repayDate": "返済日",
     "creditLineLabel": "融資枠",
-    "drawdownLabel": "借入"
+    "drawdownLabel": "借入",
+    "paidAmount": "返済済"
   },
   "settings": {
     "exchangeRate": "為替レート設定",
