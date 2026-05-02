@@ -79,7 +79,9 @@
     "month": "個月",
     "avgCost": "平均成本",
     "marketPrice": "市場價格",
-    "pledge": "質押"
+    "pledge": "質押",
+    "tdccTop": "前 {percent}%",
+    "tdccLabel": "集保排名"
   },
   "liability": {
     "name": "名稱",

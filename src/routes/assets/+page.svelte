@@ -13,6 +13,8 @@
   import { liabilities } from '$lib/stores/liabilities.js';
   import { exchangeRate } from '$lib/stores/exchangeRate.js';
   import { pendingModal, clearPendingModal } from '$lib/stores/modalState.js';
+  import { tdccStore } from '$lib/stores/tdcc.js';
+  import { onMount } from 'svelte';
   import AssetList from '../../components/assets/AssetList.svelte';
   import LiabilityList from '../../components/assets/LiabilityList.svelte';
   import AssetModal from '../../components/modals/AssetModal.svelte';
@@ -21,6 +23,28 @@
 
   /* 訂閱 tStore 以在語言切換時觸發重新渲染 */
   $: _t = $tStore;
+
+  // ─── TDCC 集保排名 ─────────────────────────────────────────────────────
+
+  /** 取得台股資產清單供 TDCC 查詢 */
+  $: twStocks = $assets
+    .filter(a => a.type === 'tw_stock' && a.symbol)
+    .reduce((acc, a) => {
+      const existing = acc.find(s => s.symbol === a.symbol);
+      if (existing) {
+        existing.quantity += a.quantity;
+      } else {
+        acc.push({ symbol: a.symbol, quantity: a.quantity });
+      }
+      return acc;
+    }, []);
+
+  /** 頁面載入時取得 TDCC 排名 */
+  onMount(() => {
+    if (twStocks.length > 0) {
+      tdccStore.fetchRankings(twStocks);
+    }
+  });
 
   // ─── Modal 狀態 ────────────────────────────────────────────────────────
 

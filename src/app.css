@@ -3139,3 +3139,43 @@ body.modal-open {
   color: var(--text-secondary);
   white-space: nowrap;
 }
+
+/* ── TDCC 集保排名標籤 ── */
+.asset-tdcc-tag {
+  display: flex;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+  margin-top: var(--spacing-xs);
+}
+
+.tdcc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: var(--border-radius-full);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.tdcc-badge.tdcc-top5 {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: var(--color-positive);
+  color: var(--color-positive);
+}
+
+.tdcc-badge.tdcc-top10 {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.tdcc-badge.tdcc-top20 {
+  background: rgba(255, 145, 0, 0.10);
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}

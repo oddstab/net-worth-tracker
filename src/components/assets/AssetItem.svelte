@@ -15,6 +15,7 @@
   import { showConfirmDialog } from '$lib/stores/confirmDialog.js';
   import { assets } from '$lib/stores/assets.js';
   import { liabilities as liabilitiesStore } from '$lib/stores/liabilities.js';
+  import { tdccStore } from '$lib/stores/tdcc.js';
   import { showToast } from '$lib/stores/toast.js';
   import Icon from '../Icon.svelte';
 
@@ -51,6 +52,9 @@
 
   /** 顯示名稱（代號 + 名稱） */
   $: displayName = asset.symbol ? `${asset.symbol} ${asset.name}` : asset.name;
+
+  /** TDCC 排名資料 */
+  $: tdccRanking = asset.type === 'tw_stock' && asset.symbol ? $tdccStore.get(asset.symbol) : null;
 
   /** 格式化最後更新時間 */
   function formatLastUpdate(ts) {
@@ -160,6 +164,15 @@
         <span class="pledge-tag">{t('asset.pledge')} {formatCurrency(pledgeBorrowed)}</span>
         <span class="pledge-tag" style="color: {pledgeMaintenanceRate >= 160 ? 'var(--color-positive)' : pledgeMaintenanceRate >= 140 ? 'var(--color-warning)' : 'var(--color-negative)'}">
           {t('tools.maintenanceRate')} {pledgeMaintenanceRate.toFixed(0)}%
+        </span>
+      </div>
+    {/if}
+
+    <!-- TDCC 集保排名標籤 -->
+    {#if tdccRanking}
+      <div class="asset-tdcc-tag">
+        <span class="tdcc-badge" class:tdcc-top5={tdccRanking.topPercent <= 5} class:tdcc-top10={tdccRanking.topPercent > 5 && tdccRanking.topPercent <= 10} class:tdcc-top20={tdccRanking.topPercent > 10 && tdccRanking.topPercent <= 20}>
+          <Icon name="users" size={12}/> {t('asset.tdccTop', { percent: tdccRanking.topPercent.toFixed(2) })}
         </span>
       </div>
     {/if}
