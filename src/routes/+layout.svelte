@@ -22,6 +22,9 @@
   import { assets } from '$lib/stores/assets.js';
   import { initPriceSystem } from '$lib/price/init.js';
   import { get } from 'svelte/store';
+  import { snapshots } from '$lib/stores/snapshots.js';
+  import { totals } from '$lib/stores/derived.js';
+  import { autoSnapshot } from '$lib/services/snapshotManager.js';
 
   /** 頁面順序（左右滑動切換） */
   const PAGES = ['/', '/assets', '/tools', '/settings'];
@@ -147,17 +150,33 @@
       getAssets: () => get(assets),
       onPricesUpdated: (updatedAssets, count) => {
         assets.replaceAll(updatedAssets);
+        // 價格更新後同步更新當日快照
+        performAutoSnapshot();
       },
       showToast,
     });
 
     // 首次載入時立即更新一次價格
     priceSystem.refresh();
+
+    // 啟動時建立/更新當日快照（記錄當前淨資產）
+    performAutoSnapshot();
   });
 
   onDestroy(() => {
     if (priceSystem) priceSystem.stop();
   });
+
+  /**
+   * 自動建立/更新當日快照：取得當前淨資產並寫入 snapshots store。
+   * 每次 APP 啟動和價格更新後呼叫。
+   */
+  function performAutoSnapshot() {
+    const currentTotals = get(totals);
+    const currentSnapshots = get(snapshots);
+    const updated = autoSnapshot(currentSnapshots, currentTotals.netWorth);
+    snapshots.replaceAll(updated);
+  }
 
   /**
    * 註冊 Service Worker 並監聽更新事件。

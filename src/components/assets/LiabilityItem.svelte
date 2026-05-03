@@ -175,11 +175,15 @@
     scheduleExpanded = !scheduleExpanded;
     if (scheduleExpanded && paidTerms > 0) {
       await tick();
-      // 滾動到高亮列（目前繳款月份）
+      // 定位到高亮列（目前繳款月份），只滾動表格容器
       if (loanTableWrap) {
         const highlighted = loanTableWrap.querySelector('.loan-current-period');
         if (highlighted) {
-          highlighted.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          // 計算高亮列在容器內的偏移，置中顯示
+          const containerH = loanTableWrap.clientHeight;
+          const rowTop = highlighted.offsetTop;
+          const rowH = highlighted.offsetHeight;
+          loanTableWrap.scrollTop = rowTop - containerH / 2 + rowH / 2;
         }
       }
     }
