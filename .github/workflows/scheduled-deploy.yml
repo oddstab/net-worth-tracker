@@ -1,8 +1,10 @@
-name: Deploy to GitHub Pages
+name: Scheduled Deploy (Daily Data Refresh)
 
 on:
-  push:
-    branches: [ main ]
+  schedule:
+    # 每天台股收盤後（UTC 07:00 = 台灣時間 15:00）自動部署
+    - cron: '0 7 * * 1-5'
+  workflow_dispatch: # 允許手動觸發
 
 permissions:
   contents: read

@@ -9,15 +9,23 @@
 
 // ─── CORS Proxy ───────────────────────────────────────────────────────────────
 
-const PROXY = 'https://corsproxy.io/?url=';
+/**
+ * CORS 代理清單（依序嘗試）。
+ * corsproxy.io 為主要代理，其餘為備援。
+ */
+const CORS_PROXIES = [
+  (url) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+  (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+];
 
 /**
- * 將 URL 包裝為 corsproxy.io 代理 URL。
+ * 將 URL 包裝為 CORS 代理 URL 清單。
  * @param {string} url
- * @returns {string}
+ * @returns {string[]}
  */
-function proxied(url) {
-  return `${PROXY}${encodeURIComponent(url)}`;
+function proxiedUrls(url) {
+  return CORS_PROXIES.map(fn => fn(url));
 }
 
 /**
@@ -36,6 +44,33 @@ async function fetchWithFallback(urls) {
     }
   }
   return null;
+}
+
+/**
+ * 安全解析 Response 為 JSON。
+ * 某些 TPEx 端點回傳 Big5 編碼，`Response.json()` 預設以 UTF-8 解碼會失敗。
+ * 此函式先嘗試標準 `.json()`，失敗時改用 Big5 解碼重試。
+ *
+ * @param {Response} res
+ * @returns {Promise<any>}
+ */
+async function safeJsonParse(res) {
+  // 先 clone 一份，因為 body 只能讀取一次
+  const cloned = res.clone();
+  try {
+    return await cloned.json();
+  } catch (utf8Err) {
+    // 標準 UTF-8 解析失敗，嘗試 Big5 解碼
+    console.warn('[safeJsonParse] UTF-8 解析失敗，嘗試 Big5:', utf8Err.message);
+    try {
+      const buf = await res.arrayBuffer();
+      const text = new TextDecoder('big5').decode(buf);
+      return JSON.parse(text);
+    } catch (big5Err) {
+      console.error('[safeJsonParse] Big5 解析也失敗:', big5Err.message);
+      throw big5Err;
+    }
+  }
 }
 
 // ─── 安全解析浮點數 ──────────────────────────────────────────────────────────
@@ -82,6 +117,25 @@ const STOCK_DAY_ALL_URL = 'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_D
 /** TPEx openapi 上櫃每日收盤行情端點 */
 const OTC_DAY_ALL_URL = 'https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes';
 
+/** 本地預建的上櫃資料（CI/CD 時抓取，無 CORS 問題） */
+const OTC_LOCAL_URL = getBaseUrl() + '/data/otc_daily.json';
+
+/**
+ * 取得 SvelteKit base URL。
+ * 靜態部署時 base path 為 /net-worth-tracker。
+ * @returns {string}
+ */
+function getBaseUrl() {
+  // 嘗試從 <base> 標籤或 meta 取得，fallback 到已知的 base path
+  if (typeof document !== 'undefined') {
+    const baseEl = document.querySelector('base');
+    if (baseEl?.href) {
+      return new URL(baseEl.href).pathname.replace(/\/$/, '');
+    }
+  }
+  return '/net-worth-tracker';
+}
+
 /**
  * 載入全市場股價資料（STOCK_DAY_ALL）。
  * 快取有效期內直接回傳快取，過期或強制刷新時重新載入。
@@ -100,9 +154,10 @@ async function loadStockDayAll(forceRefresh = false) {
   console.log('[SearchService] 重新載入股價資料...', forceRefresh ? '(強制刷新)' : '');
 
   // 並行載入上市（TSE）和上櫃（OTC）資料
+  // OTC 優先嘗試本地預建 JSON（CI/CD 時抓取），再嘗試直連和 CORS proxy
   const [tseRes, otcRes] = await Promise.all([
-    fetchWithFallback([STOCK_DAY_ALL_URL, proxied(STOCK_DAY_ALL_URL)]),
-    fetchWithFallback([OTC_DAY_ALL_URL, proxied(OTC_DAY_ALL_URL)]),
+    fetchWithFallback([STOCK_DAY_ALL_URL, ...proxiedUrls(STOCK_DAY_ALL_URL)]),
+    fetchWithFallback([OTC_LOCAL_URL, OTC_DAY_ALL_URL, ...proxiedUrls(OTC_DAY_ALL_URL)]),
   ]);
 
   const map = new Map();
@@ -137,7 +192,7 @@ async function loadStockDayAll(forceRefresh = false) {
   // 解析上櫃資料（過濾權證：只保留代號 ≤ 6 碼且不含英文字母開頭的 7 碼代號）
   if (otcRes) {
     try {
-      const json = await otcRes.json();
+      const json = await safeJsonParse(otcRes);
       if (Array.isArray(json)) {
         let otcCount = 0;
         for (const item of json) {
@@ -167,6 +222,7 @@ async function loadStockDayAll(forceRefresh = false) {
       }
     } catch (error) {
       console.error('[SearchService] 解析上櫃資料失敗:', error);
+      console.error('[SearchService] 上櫃資料可能因 CORS 或編碼問題無法載入');
     }
   }
 
@@ -342,7 +398,7 @@ export async function getTWStockDetail(symbol) {
 async function fetchRealtimeDetail(symbol, etfMeta) {
   for (const market of ['tse', 'otc']) {
     const direct = `https://mis.twse.com.tw/stock/api/getStockInfo.jsp?ex_ch=${market}_${encodeURIComponent(symbol)}.tw&json=1&delay=0`;
-    const res = await fetchWithFallback([direct, proxied(direct)]);
+    const res = await fetchWithFallback([direct, ...proxiedUrls(direct)]);
     if (!res) continue;
 
     try {
@@ -392,6 +448,9 @@ const COMPANY_INFO_URL = 'https://openapi.twse.com.tw/v1/opendata/t187ap03_L';
 /** TPEx opendata 上櫃公司基本資料端點 */
 const OTC_COMPANY_INFO_URL = 'https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap03_O';
 
+/** 本地預建的上櫃公司基本資料 */
+const OTC_COMPANY_LOCAL_URL = getBaseUrl() + '/data/otc_company.json';
+
 /**
  * 載入上市公司基本資料。
  * 快取有效期 1 小時，直連失敗時自動走代理。
@@ -405,8 +464,8 @@ async function loadCompanyInfo() {
 
   // 並行載入上市和上櫃公司基本資料
   const [tseRes, otcRes] = await Promise.all([
-    fetchWithFallback([COMPANY_INFO_URL, proxied(COMPANY_INFO_URL)]),
-    fetchWithFallback([OTC_COMPANY_INFO_URL, proxied(OTC_COMPANY_INFO_URL)]),
+    fetchWithFallback([COMPANY_INFO_URL, ...proxiedUrls(COMPANY_INFO_URL)]),
+    fetchWithFallback([OTC_COMPANY_LOCAL_URL, OTC_COMPANY_INFO_URL, ...proxiedUrls(OTC_COMPANY_INFO_URL)]),
   ]);
 
   const map = new Map();
@@ -437,7 +496,7 @@ async function loadCompanyInfo() {
   // 解析上櫃公司資料（欄位名稱相同）
   if (otcRes) {
     try {
-      const list = await otcRes.json();
+      const list = await safeJsonParse(otcRes);
       for (const item of list) {
         const code = item['公司代號']?.trim();
         if (!code || map.has(code.toUpperCase())) continue;
@@ -486,7 +545,7 @@ export async function getCryptoDetail(coinId) {
   const staticInfo = CRYPTO_LIST.find(c => c.id === coinId);
   const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(coinId)}&vs_currencies=twd,usd&include_market_cap=true&include_24hr_change=true`;
 
-  const res = await fetchWithFallback([url, proxied(url)]);
+  const res = await fetchWithFallback([url, ...proxiedUrls(url)]);
   if (!res) return buildCryptoFallback(coinId, staticInfo);
 
   try {
@@ -595,7 +654,7 @@ export async function getMonthlyChange(symbol) {
     const stockNo = encodeURIComponent(symbol);
     const url = `https://www.twse.com.tw/exchangeReport/STOCK_DAY?response=json&date=${twseDate}&stockNo=${stockNo}`;
 
-    const res = await fetchWithFallback([url, proxied(url)]);
+    const res = await fetchWithFallback([url, ...proxiedUrls(url)]);
     if (!res) return empty;
 
     const data = await res.json();

@@ -5,6 +5,9 @@ node_modules/
 .svelte-kit/
 build/
 
+# CI/CD 動態產生的市場資料（build 時抓取）
+static/data/
+
 # Test coverage
 coverage/
 

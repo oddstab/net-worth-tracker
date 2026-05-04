@@ -5,11 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev",
+    "prebuild": "node scripts/fetch-otc-data.mjs",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest --run",
     "test:watch": "vitest",
-    "coverage": "vitest run --coverage"
+    "coverage": "vitest run --coverage",
+    "fetch-data": "node scripts/fetch-otc-data.mjs"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.8",

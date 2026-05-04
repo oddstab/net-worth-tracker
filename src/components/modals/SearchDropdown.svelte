@@ -3,10 +3,12 @@
 
   支援台股與加密貨幣搜尋，200ms 防抖。
   鍵盤導覽：↑↓ 選擇、Enter 確認、Escape 關閉。
+  使用 position: fixed 定位，避免被 modal 的 overflow 裁切。
+  下拉開啟時鎖定 modal-body 滾動，關閉時恢復。
   所有文字使用 t() 翻譯函式。
 -->
 <script>
-  import { createEventDispatcher, onDestroy } from 'svelte';
+  import { createEventDispatcher, onDestroy, tick } from 'svelte';
   import { t } from '$lib/services/i18n.js';
   import { tStore } from '$lib/services/i18n.js';
   import { searchTWStock, searchCrypto } from '$lib/services/searchService.js';
@@ -37,13 +39,92 @@
   /** 下拉容器參考 */
   let dropdownEl;
 
+  /** 輸入框參考 */
+  let inputEl;
+
+  /** 下拉選單的 fixed 定位座標 */
+  let dropdownStyle = '';
+
   /* 訂閱 tStore 以在語言切換時觸發重新渲染 */
   $: _t = $tStore;
 
   /** 清理計時器 */
   onDestroy(() => {
     if (debounceTimer) clearTimeout(debounceTimer);
+    // 確保銷毀時恢復 modal 滾動
+    setModalBodyScroll(true);
   });
+
+  // ─── Modal 滾動鎖定 ──────────────────────────────────────────────────
+
+  /**
+   * 鎖定或解鎖最近的 .modal-body 滾動。
+   * @param {boolean} allow - true 允許滾動，false 鎖定滾動
+   */
+  function setModalBodyScroll(allow) {
+    if (!inputEl) return;
+    const modalBody = inputEl.closest('.modal-body');
+    if (!modalBody) return;
+    modalBody.style.overflowY = allow ? '' : 'hidden';
+  }
+
+  /**
+   * 顯示下拉選單並鎖定 modal 滾動。
+   */
+  function showDropdown() {
+    dropdownVisible = true;
+    setModalBodyScroll(false);
+  }
+
+  /**
+   * 隱藏下拉選單並恢復 modal 滾動。
+   */
+  function hideDropdown() {
+    dropdownVisible = false;
+    setModalBodyScroll(true);
+  }
+
+  // ─── 定位計算 ────────────────────────────────────────────────────────
+
+  /** 視窗底部留白（px） */
+  const VIEWPORT_PADDING = 12;
+
+  /**
+   * 根據輸入框位置計算下拉選單的 fixed 定位。
+   * max-height 動態計算，確保不超出視窗底部。
+   */
+  function updateDropdownPosition() {
+    if (!inputEl) return;
+    const rect = inputEl.getBoundingClientRect();
+    const top = rect.bottom + 4;
+    const maxH = Math.max(120, window.innerHeight - top - VIEWPORT_PADDING);
+    dropdownStyle = `position:fixed; top:${top}px; left:${rect.left}px; width:${rect.width}px; max-height:${maxH}px;`;
+  }
+
+  // ─── 搜尋與事件處理 ──────────────────────────────────────────────────
+
+  /**
+   * 處理 focus 事件 — 點擊搜尋欄位時立即觸發搜尋並顯示下拉選單。
+   */
+  async function handleFocus() {
+    const q = value.trim();
+    if (q.length < 1) {
+      // 沒有輸入內容時不顯示下拉
+      return;
+    }
+    // 有輸入內容時立即搜尋並顯示
+    const searchResults = assetType === 'tw_stock'
+      ? await searchTWStock(q)
+      : searchCrypto(q);
+
+    results = searchResults;
+    if (results.length > 0 || q.length > 0) {
+      showDropdown();
+    }
+    highlightIndex = -1;
+    await tick();
+    updateDropdownPosition();
+  }
 
   /**
    * 處理輸入事件，200ms 防抖後執行搜尋。
@@ -55,7 +136,7 @@
     const q = value.trim();
     if (q.length < 1) {
       results = [];
-      dropdownVisible = false;
+      hideDropdown();
       return;
     }
 
@@ -65,8 +146,16 @@
         : searchCrypto(q);
 
       results = searchResults;
-      dropdownVisible = results.length > 0 || q.length > 0;
+      if (results.length > 0 || q.length > 0) {
+        showDropdown();
+      } else {
+        hideDropdown();
+      }
       highlightIndex = -1;
+
+      // 等 DOM 更新後計算位置
+      await tick();
+      updateDropdownPosition();
     }, 200);
   }
 
@@ -93,7 +182,7 @@
         assetType: 'crypto',
       });
     }
-    dropdownVisible = false;
+    hideDropdown();
     results = [];
   }
 
@@ -117,7 +206,7 @@
       const target = highlightIndex >= 0 ? results[highlightIndex] : results[0];
       if (target) selectItem(target);
     } else if (e.key === 'Escape') {
-      dropdownVisible = false;
+      hideDropdown();
     }
   }
 
@@ -132,7 +221,11 @@
 
   /** 失焦時延遲關閉下拉（讓 mousedown 有時間觸發） */
   function handleBlur() {
-    setTimeout(() => { dropdownVisible = false; }, 150);
+    setTimeout(() => {
+      // 如果焦點回到了 input（例如點 label 觸發 focus 轉移），不關閉
+      if (document.activeElement === inputEl) return;
+      hideDropdown();
+    }, 150);
   }
 
   /**
@@ -142,7 +235,7 @@
    */
   function formatClose(close) {
     if (close == null) return '';
-    return `NT$${close.toFixed(2)}`;
+    return `NT${close.toFixed(2)}`;
   }
 </script>
 
@@ -156,8 +249,10 @@
       class="form-input"
       type="text"
       id="asset-symbol"
+      bind:this={inputEl}
       bind:value
       on:input={handleInput}
+      on:focus={handleFocus}
       on:keydown={handleKeydown}
       on:blur={handleBlur}
       placeholder={t('asset.searchPlaceholder')}
@@ -165,7 +260,7 @@
       {disabled}
     />
     {#if dropdownVisible}
-      <div class="search-dropdown" bind:this={dropdownEl}>
+      <div class="search-dropdown" style={dropdownStyle} bind:this={dropdownEl}>
         {#if results.length === 0}
           <div class="search-dropdown-empty">{t('common.noResults')}</div>
         {:else}

@@ -12,6 +12,7 @@
   import { formatCurrency, formatCompact } from '$lib/services/localeFormatter.js';
   import { t } from '$lib/services/i18n.js';
   import { tStore } from '$lib/services/i18n.js';
+  import { onMount, onDestroy } from 'svelte';
 
   /** @type {Array<{ date: string, netWorth: number }>} */
   export let snapshots = [];
@@ -85,24 +86,71 @@
     return map;
   })();
 
-  /** 顯示 tooltip */
-  function showTooltip(e, cell) {
+  /** 當前 tooltip 對應的格子元素（用於滾動時更新位置） */
+  let tooltipAnchor = null;
+
+  /**
+   * 顯示或更新 tooltip — 不管之前狀態，直接定位到指定格子。
+   * 桌面 hover、手機 click 都走這裡。
+   */
+  function showTooltip(el, cell) {
     const nw = netWorthMap.get(cell.date);
     if (nw == null && cell.pnl == null) return;
     const lines = [cell.date];
     if (nw != null) lines.push(`${t('dashboard.netWorthLabel')}: ${formatCurrency(nw)}`);
     if (cell.pnl != null) lines.push(`${t('dashboard.pnlLabel')}: ${formatPnl(cell.pnl)}`);
     tooltipContent = lines.join('\n');
-    const rect = e.currentTarget.getBoundingClientRect();
-    tooltipX = rect.left + rect.width / 2;
-    tooltipY = rect.top - 8;
+    tooltipAnchor = el;
+    syncPosition();
     tooltipVisible = true;
+    scrollYOnShow = window.scrollY;
   }
 
   /** 隱藏 tooltip */
   function hideTooltip() {
     tooltipVisible = false;
+    tooltipAnchor = null;
   }
+
+  /** 根據 anchor 元素同步 tooltip 座標 */
+  function syncPosition() {
+    if (!tooltipAnchor) return;
+    const r = tooltipAnchor.getBoundingClientRect();
+    tooltipX = r.left + r.width / 2;
+    tooltipY = r.top - 8;
+  }
+
+  /** 顯示 tooltip 時記錄滾動位置 */
+  let scrollYOnShow = 0;
+
+  /** 滾動關閉閾值（px） */
+  const SCROLL_THRESHOLD = 40;
+
+  /** 滾動時讓 tooltip 跟著格子移動；超過閾值隱藏 */
+  function onScroll() {
+    if (!tooltipVisible) return;
+    if (Math.abs(window.scrollY - scrollYOnShow) > SCROLL_THRESHOLD) {
+      hideTooltip();
+      return;
+    }
+    syncPosition();
+  }
+
+  /** 點擊日曆外部關閉 tooltip */
+  function onDocClick(e) {
+    if (!tooltipVisible) return;
+    if (e.target.closest('.pnl-calendar')) return;
+    hideTooltip();
+  }
+
+  onMount(() => {
+    window.addEventListener('scroll', onScroll, { passive: true, capture: true });
+    document.addEventListener('click', onDocClick);
+  });
+  onDestroy(() => {
+    window.removeEventListener('scroll', onScroll, { capture: true });
+    document.removeEventListener('click', onDocClick);
+  });
 
   /**
    * 建立當月日曆格子
@@ -206,11 +254,10 @@
         class:negative-bg={cell.pnl !== null && cell.pnl < 0}
         role="gridcell"
         tabindex="-1"
-        on:mouseenter={(e) => { if (cell.day !== null) showTooltip(e, cell); }}
+        on:mouseenter={(e) => { if (cell.day !== null) showTooltip(e.currentTarget, cell); }}
         on:mouseleave={hideTooltip}
-        on:touchstart|passive={(e) => { if (cell.day !== null) showTooltip(e, cell); }}
-        on:touchend={hideTooltip}
-        on:touchmove={hideTooltip}
+        on:click={(e) => { if (cell.day !== null) showTooltip(e.currentTarget, cell); }}
+        on:keydown={(e) => { if (e.key === 'Enter' && cell.day !== null) showTooltip(e.currentTarget, cell); }}
       >
         {#if cell.day !== null}
           <span class="cell-day">{cell.day}</span>
@@ -224,14 +271,16 @@
     {/each}
   </div>
 
-  <!-- Tooltip -->
-  {#if tooltipVisible}
-    <div class="calendar-tooltip" style="left: {tooltipX}px; top: {tooltipY}px;">
-      {#each tooltipContent.split('\n') as line}
-        <div>{line}</div>
-      {/each}
-    </div>
-  {/if}
+  <!-- Tooltip（永遠渲染，用 class 控制顯示/隱藏 + 動畫） -->
+  <div
+    class="calendar-tooltip"
+    class:visible={tooltipVisible}
+    style="left: {tooltipX}px; top: {tooltipY}px;"
+  >
+    {#each tooltipContent.split('\n') as line}
+      <div>{line}</div>
+    {/each}
+  </div>
 </div>
 
 <style>
@@ -377,15 +426,40 @@
   /* Tooltip */
   .calendar-tooltip {
     position: fixed;
-    transform: translate(-50%, -100%);
-    background: rgba(0, 0, 0, 0.85);
+    transform: translate(-50%, -100%) translateY(6px);
+    background: rgba(26, 26, 46, 0.75);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: #fff;
-    padding: 6px 12px;
-    border-radius: 8px;
+    padding: 8px 14px;
+    border-radius: 10px;
     font-size: 12px;
     line-height: 1.5;
     white-space: nowrap;
     pointer-events: none;
     z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      opacity 150ms ease,
+      visibility 150ms ease,
+      transform 150ms ease,
+      left 180ms cubic-bezier(0.22, 1, 0.36, 1),
+      top 180ms cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+  }
+  .calendar-tooltip.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -100%) translateY(0);
+  }
+
+  /* Light theme tooltip */
+  :global([data-theme="light"]) .calendar-tooltip {
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    color: var(--text-primary);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
   }
 </style>
