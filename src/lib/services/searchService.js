@@ -79,6 +79,9 @@ const CACHE_TTL_MS = 1 * 60 * 1000;
 /** TWSE openapi STOCK_DAY_ALL 端點 */
 const STOCK_DAY_ALL_URL = 'https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL';
 
+/** TPEx openapi 上櫃每日收盤行情端點 */
+const OTC_DAY_ALL_URL = 'https://www.tpex.org.tw/openapi/v1/tpex_mainboard_daily_close_quotes';
+
 /**
  * 載入全市場股價資料（STOCK_DAY_ALL）。
  * 快取有效期內直接回傳快取，過期或強制刷新時重新載入。
@@ -95,46 +98,87 @@ async function loadStockDayAll(forceRefresh = false) {
   }
 
   console.log('[SearchService] 重新載入股價資料...', forceRefresh ? '(強制刷新)' : '');
-  const res = await fetchWithFallback([
-    STOCK_DAY_ALL_URL,
-    proxied(STOCK_DAY_ALL_URL),
+
+  // 並行載入上市（TSE）和上櫃（OTC）資料
+  const [tseRes, otcRes] = await Promise.all([
+    fetchWithFallback([STOCK_DAY_ALL_URL, proxied(STOCK_DAY_ALL_URL)]),
+    fetchWithFallback([OTC_DAY_ALL_URL, proxied(OTC_DAY_ALL_URL)]),
   ]);
-  if (!res) {
-    console.warn('[SearchService] 無法載入股價資料');
-    return stockDayAllCache; // 回傳舊快取而非 null
-  }
 
-  try {
-    const json = await res.json();
-    const map = new Map();
+  const map = new Map();
 
-    if (Array.isArray(json)) {
-      for (const item of json) {
-        if (!item.Code) continue;
-        map.set(item.Code.toUpperCase(), {
-          code:   item.Code,
-          name:   item.Name || '',
-          close:  parseFloatSafe(item.ClosingPrice),
-          change: parseFloatSafe(item.Change),
-          open:   parseFloatSafe(item.OpeningPrice),
-          high:   parseFloatSafe(item.HighestPrice),
-          low:    parseFloatSafe(item.LowestPrice),
-          volume: item.TradeVolume ? Number(item.TradeVolume).toLocaleString('zh-TW') : null,
-          date:   convertTWSEDate(item.Date),
-        });
+  // 解析上市資料
+  if (tseRes) {
+    try {
+      const json = await tseRes.json();
+      if (Array.isArray(json)) {
+        for (const item of json) {
+          if (!item.Code) continue;
+          map.set(item.Code.toUpperCase(), {
+            code:   item.Code,
+            name:   item.Name || '',
+            close:  parseFloatSafe(item.ClosingPrice),
+            change: parseFloatSafe(item.Change),
+            open:   parseFloatSafe(item.OpeningPrice),
+            high:   parseFloatSafe(item.HighestPrice),
+            low:    parseFloatSafe(item.LowestPrice),
+            volume: item.TradeVolume ? Number(item.TradeVolume).toLocaleString('zh-TW') : null,
+            date:   convertTWSEDate(item.Date),
+            market: 'tse',
+          });
+        }
+        console.log(`[SearchService] 上市資料: ${json.length} 筆`);
       }
+    } catch (error) {
+      console.error('[SearchService] 解析上市資料失敗:', error);
     }
-
-    if (map.size > 0) {
-      stockDayAllCache = map;
-      stockDayAllFetchedAt = now;
-      console.log(`[SearchService] 成功載入 ${map.size} 筆股價資料，日期: ${json[0]?.Date}`);
-    }
-    return map.size > 0 ? map : stockDayAllCache;
-  } catch (error) {
-    console.error('[SearchService] 解析股價資料失敗:', error);
-    return stockDayAllCache; // 回傳舊快取而非 null
   }
+
+  // 解析上櫃資料（過濾權證：只保留代號 ≤ 6 碼且不含英文字母開頭的 7 碼代號）
+  if (otcRes) {
+    try {
+      const json = await otcRes.json();
+      if (Array.isArray(json)) {
+        let otcCount = 0;
+        for (const item of json) {
+          const code = item.SecuritiesCompanyCode;
+          if (!code) continue;
+          // 過濾權證：權證代號通常 6 碼以上且以 7 開頭，或含英文字母
+          // 一般股票/ETF 代號為 4~6 碼純數字
+          if (code.length > 6 || /[A-Za-z]/.test(code.slice(0, 1))) continue;
+          // 跳過已存在的上市股票（避免覆蓋）
+          if (map.has(code.toUpperCase())) continue;
+
+          map.set(code.toUpperCase(), {
+            code:   code,
+            name:   item.CompanyName || '',
+            close:  parseFloatSafe(item.Close),
+            change: parseFloatSafe(item.Change),
+            open:   parseFloatSafe(item.Open),
+            high:   parseFloatSafe(item.High),
+            low:    parseFloatSafe(item.Low),
+            volume: item.TradingShares ? Number(item.TradingShares).toLocaleString('zh-TW') : null,
+            date:   convertTWSEDate(item.Date),
+            market: 'otc',
+          });
+          otcCount++;
+        }
+        console.log(`[SearchService] 上櫃資料: ${otcCount} 筆（過濾權證後）`);
+      }
+    } catch (error) {
+      console.error('[SearchService] 解析上櫃資料失敗:', error);
+    }
+  }
+
+  if (map.size > 0) {
+    stockDayAllCache = map;
+    stockDayAllFetchedAt = now;
+    console.log(`[SearchService] 成功載入 ${map.size} 筆股價資料（上市+上櫃）`);
+  } else if (!tseRes && !otcRes) {
+    console.warn('[SearchService] 無法載入股價資料');
+  }
+
+  return map.size > 0 ? map : stockDayAllCache;
 }
 
 /**
@@ -277,7 +321,7 @@ export async function getTWStockDetail(symbol) {
         price: item.close, isHistorical: true, priceDate: item.date,
         change: item.change, changePercent,
         high: item.high, low: item.low, volume: item.volume,
-        type: guessType(item.code), exchange: 'TSE',
+        type: guessType(item.code), exchange: item.market === 'otc' ? 'OTC' : 'TSE',
         etfMeta: etfMeta ? { ...etfMeta, yearsListed } : null,
       };
     }
@@ -345,6 +389,9 @@ const COMPANY_CACHE_TTL = 60 * 60 * 1000;
 /** TWSE opendata 上市公司基本資料端點 */
 const COMPANY_INFO_URL = 'https://openapi.twse.com.tw/v1/opendata/t187ap03_L';
 
+/** TPEx opendata 上櫃公司基本資料端點 */
+const OTC_COMPANY_INFO_URL = 'https://www.tpex.org.tw/openapi/v1/mopsfin_t187ap03_O';
+
 /**
  * 載入上市公司基本資料。
  * 快取有效期 1 小時，直連失敗時自動走代理。
@@ -356,39 +403,65 @@ async function loadCompanyInfo() {
     return companyInfoCache;
   }
 
-  const res = await fetchWithFallback([
-    COMPANY_INFO_URL,
-    proxied(COMPANY_INFO_URL),
+  // 並行載入上市和上櫃公司基本資料
+  const [tseRes, otcRes] = await Promise.all([
+    fetchWithFallback([COMPANY_INFO_URL, proxied(COMPANY_INFO_URL)]),
+    fetchWithFallback([OTC_COMPANY_INFO_URL, proxied(OTC_COMPANY_INFO_URL)]),
   ]);
-  if (!res) return companyInfoCache || null;
 
-  try {
-    const list = await res.json();
-    const map = new Map();
-    for (const item of list) {
-      const code = item['公司代號']?.trim();
-      if (!code) continue;
-      map.set(code.toUpperCase(), {
-        code,
-        fullName:   item['公司名稱']?.trim() || '',
-        shortName:  item['公司簡稱']?.trim() || '',
-        industry:   item['產業別']?.trim() || '',
-        listedDate: item['上市日期']?.trim() || '',
-        capital:    item['實收資本額']?.trim() || '',
-        shares:     item['已發行普通股數或TDR原股發行股數']?.trim() || '',
-        chairman:   item['董事長']?.trim() || '',
-        ceo:        item['總經理']?.trim() || '',
-        website:    item['網址']?.trim() || '',
-      });
-    }
-    if (map.size > 0) {
-      companyInfoCache = map;
-      companyInfoFetchedAt = now;
-    }
-    return map.size > 0 ? map : (companyInfoCache || null);
-  } catch {
-    return companyInfoCache || null;
+  const map = new Map();
+
+  // 解析上市公司資料
+  if (tseRes) {
+    try {
+      const list = await tseRes.json();
+      for (const item of list) {
+        const code = item['公司代號']?.trim();
+        if (!code) continue;
+        map.set(code.toUpperCase(), {
+          code,
+          fullName:   item['公司名稱']?.trim() || '',
+          shortName:  item['公司簡稱']?.trim() || '',
+          industry:   item['產業別']?.trim() || '',
+          listedDate: item['上市日期']?.trim() || '',
+          capital:    item['實收資本額']?.trim() || '',
+          shares:     item['已發行普通股數或TDR原股發行股數']?.trim() || '',
+          chairman:   item['董事長']?.trim() || '',
+          ceo:        item['總經理']?.trim() || '',
+          website:    item['網址']?.trim() || '',
+        });
+      }
+    } catch { /* 靜默失敗 */ }
   }
+
+  // 解析上櫃公司資料（欄位名稱相同）
+  if (otcRes) {
+    try {
+      const list = await otcRes.json();
+      for (const item of list) {
+        const code = item['公司代號']?.trim();
+        if (!code || map.has(code.toUpperCase())) continue;
+        map.set(code.toUpperCase(), {
+          code,
+          fullName:   item['公司名稱']?.trim() || '',
+          shortName:  item['公司簡稱']?.trim() || '',
+          industry:   item['產業別']?.trim() || '',
+          listedDate: item['上櫃日期']?.trim() || item['上市日期']?.trim() || '',
+          capital:    item['實收資本額']?.trim() || '',
+          shares:     item['已發行普通股數或TDR原股發行股數']?.trim() || '',
+          chairman:   item['董事長']?.trim() || '',
+          ceo:        item['總經理']?.trim() || '',
+          website:    item['網址']?.trim() || '',
+        });
+      }
+    } catch { /* 靜默失敗 */ }
+  }
+
+  if (map.size > 0) {
+    companyInfoCache = map;
+    companyInfoFetchedAt = now;
+  }
+  return map.size > 0 ? map : (companyInfoCache || null);
 }
 
 /**
