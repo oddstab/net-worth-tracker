@@ -208,6 +208,9 @@
         tabindex="-1"
         on:mouseenter={(e) => { if (cell.day !== null) showTooltip(e, cell); }}
         on:mouseleave={hideTooltip}
+        on:touchstart|passive={(e) => { if (cell.day !== null) showTooltip(e, cell); }}
+        on:touchend={hideTooltip}
+        on:touchmove={hideTooltip}
       >
         {#if cell.day !== null}
           <span class="cell-day">{cell.day}</span>
