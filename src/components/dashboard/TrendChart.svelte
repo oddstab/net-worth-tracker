@@ -96,7 +96,8 @@
           backgroundColor: 'rgba(124, 106, 247, 0.1)',
           borderWidth: 2,
           pointRadius: data.length > 30 ? 0 : 3,
-          pointHoverRadius: 4,
+          pointHoverRadius: 6,
+          pointHitRadius: 20,
           fill: true,
           tension: 0.4,
           cubicInterpolationMode: 'monotone',
@@ -105,12 +106,21 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false,  // 不需要精確點到點，手指靠近就觸發
+        },
         plugins: {
           legend: { display: false },
           tooltip: {
+            enabled: true,
             callbacks: {
-              label: (context) => formatCurrency(context.parsed.y),
+              title: (items) => items[0]?.label || '',
+              label: (context) => ` ${formatCurrency(context.parsed.y)}`,
             },
+            padding: 10,
+            cornerRadius: 8,
+            displayColors: false,
           },
         },
         scales: {

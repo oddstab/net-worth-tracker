@@ -80,13 +80,13 @@
     "avgCost": "平均成本",
     "marketPrice": "市场价格",
     "pledge": "质押",
-    "tdccTop": "前 {percent}%",
+    "tdccTop": "股东排名 前 {percent}%",
     "tdccLabel": "集保股权分散表",
     "tdccLevel": "持股/单位数分级",
     "tdccHolders": "人数",
     "tdccShares": "股数",
     "tdccPercent": "占比 %",
-    "tdccTopPercent": "前 %",
+    "tdccTopPercent": "累计前 %",
     "tdccTotal": "合　计"
   },
   "liability": {
@@ -322,6 +322,7 @@
     "maxDrop": "可承受跌幅",
     "pledgeRatio": "质押成数 (%)",
     "loanAmountLimit": "借款金额（上限 {limit}）",
+    "loanLimit": "上限",
     "pledgeLimitWarning": "台股质押成数上限为 60%，已自动调整",
     "cannotPledge": "持有不到 1 张（1000 股），无法质押",
     "overBorrowLimit": "已超过可借上限，无法再借款。",

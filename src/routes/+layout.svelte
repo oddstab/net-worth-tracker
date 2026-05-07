@@ -7,7 +7,6 @@
 -->
 <script>
   import { onMount, onDestroy } from 'svelte';
-  import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { base } from '$app/paths';
   import '../app.css';
@@ -25,86 +24,6 @@
   import { snapshots } from '$lib/stores/snapshots.js';
   import { totals } from '$lib/stores/derived.js';
   import { autoSnapshot } from '$lib/services/snapshotManager.js';
-
-  /** 頁面順序（左右滑動切換） */
-  const PAGES = ['/', '/assets', '/tools', '/settings'];
-
-  /** Swipe 偵測 */
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let swiping = false;
-
-  /** 頁面過渡動畫 */
-  let transitionClass = '';
-  let touchStartEl = null;
-
-  /** 檢查元素或其祖先是否可水平滾動 */
-  function isHorizontallyScrollable(el) {
-    while (el && el !== document.body) {
-      if (el.scrollWidth > el.clientWidth + 1) {
-        const style = getComputedStyle(el);
-        const overflow = style.overflowX;
-        if (overflow === 'auto' || overflow === 'scroll') return true;
-      }
-      el = el.parentElement;
-    }
-    return false;
-  }
-
-  function handleTouchStart(e) {
-    const t = e.touches[0];
-    touchStartX = t.clientX;
-    touchStartY = t.clientY;
-    touchStartEl = e.target;
-    swiping = true;
-  }
-
-  function handleTouchEnd(e) {
-    if (!swiping) return;
-    swiping = false;
-    const t = e.changedTouches[0];
-    const dx = t.clientX - touchStartX;
-    const dy = t.clientY - touchStartY;
-
-    // 水平滑動距離 > 60px 且水平 > 垂直（避免誤觸）
-    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-
-    // Modal 開啟時不切換
-    if (document.body.classList.contains('modal-open')) return;
-
-    // 觸控起點在可水平滾動的元素內時不切換頁面
-    if (touchStartEl && isHorizontallyScrollable(touchStartEl)) return;
-
-    const currentPath = get(page).url.pathname;
-    // 移除 base path 前綴來匹配 PAGES
-    const relativePath = currentPath.startsWith(base) ? currentPath.slice(base.length) || '/' : currentPath;
-    const idx = PAGES.indexOf(relativePath);
-    if (idx === -1) return;
-
-    let targetIdx = -1;
-    let direction = '';
-
-    if (dx < 0 && idx < PAGES.length - 1) {
-      targetIdx = idx + 1;
-      direction = 'left';
-    } else if (dx > 0 && idx > 0) {
-      targetIdx = idx - 1;
-      direction = 'right';
-    }
-
-    if (targetIdx === -1) return;
-
-    // 用 opacity 淡出 → 切頁 → 淡入（不用 transform 避免破壞 fixed 定位）
-    transitionClass = `slide-out-${direction}`;
-    setTimeout(() => {
-      goto(base + PAGES[targetIdx], { replaceState: false }).then(() => {
-        transitionClass = `slide-in-${direction}`;
-        setTimeout(() => {
-          transitionClass = '';
-        }, 200);
-      });
-    }, 120);
-  }
 
   /** 是否顯示 SW 更新提示 */
   let showUpdatePrompt = false;
@@ -267,7 +186,7 @@
 
 {#key localeKey}
   <NavBar />
-  <main class="main-content {transitionClass}" on:touchstart={handleTouchStart} on:touchend={handleTouchEnd}>
+  <main class="main-content">
     <slot />
   </main>
   <FAB installBannerVisible={showInstallBanner} />
@@ -421,34 +340,5 @@
     to   { transform: translateY(0); opacity: 1; }
   }
 
-  /* ── 頁面滑動過渡動畫 ── */
-  :global(.slide-out-left) {
-    animation: slideOutLeft 150ms ease-in forwards;
-  }
-  :global(.slide-out-right) {
-    animation: slideOutRight 150ms ease-in forwards;
-  }
-  :global(.slide-in-left) {
-    animation: slideInLeft 250ms ease-out forwards;
-  }
-  :global(.slide-in-right) {
-    animation: slideInRight 250ms ease-out forwards;
-  }
 
-  @keyframes slideOutLeft {
-    from { opacity: 1; }
-    to   { opacity: 0; }
-  }
-  @keyframes slideOutRight {
-    from { opacity: 1; }
-    to   { opacity: 0; }
-  }
-  @keyframes slideInLeft {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
-  @keyframes slideInRight {
-    from { opacity: 0; }
-    to   { opacity: 1; }
-  }
 </style>

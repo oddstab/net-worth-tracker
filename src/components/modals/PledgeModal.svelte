@@ -357,8 +357,9 @@
           <input class="form-input" type="number" bind:value={pledgeRatio} on:change={onPledgeRatioChange} on:blur={onPledgeRatioBlur} min="1" max="60" step="0.01" disabled={!canPledge} />
         </div>
         <div class="form-group">
-          <label class="form-label">{t('tools.loanAmountLimit', { limit: formatCurrency(maxAvailable) })}</label>
+          <label class="form-label">{t('tools.loanAmount')}</label>
           <input class="form-input" type="number" bind:value={loanInput} on:change={onLoanInputChange} on:blur={onLoanInputBlur} min="0" max={maxAvailable} step="1000" disabled={!canPledge} />
+          <span class="form-hint">{t('tools.loanLimit')}: {formatCurrency(maxAvailable)}</span>
         </div>
       </div>
       {#if isOverLimit}
@@ -534,6 +535,8 @@
     outline: none;
     cursor: pointer;
     margin-bottom: var(--spacing-sm);
+    /* slider 自行消化所有觸控手勢，避免水平拖動被外層 modal 當成滾動觸發 bounce */
+    touch-action: none;
   }
   .pledge-slider::-webkit-slider-thumb {
     -webkit-appearance: none;

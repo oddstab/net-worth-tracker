@@ -80,13 +80,13 @@
     "avgCost": "平均コスト",
     "marketPrice": "市場価格",
     "pledge": "担保",
-    "tdccTop": "上位 {percent}%",
+    "tdccTop": "株主順位 上位 {percent}%",
     "tdccLabel": "株主分布表",
     "tdccLevel": "保有株数区分",
     "tdccHolders": "人数",
     "tdccShares": "株数",
     "tdccPercent": "構成比 %",
-    "tdccTopPercent": "上位 %",
+    "tdccTopPercent": "累計上位 %",
     "tdccTotal": "合　計"
   },
   "liability": {
@@ -322,6 +322,7 @@
     "maxDrop": "許容下落幅",
     "pledgeRatio": "担保率 (%)",
     "loanAmountLimit": "借入金額（上限 {limit}）",
+    "loanLimit": "上限",
     "pledgeLimitWarning": "担保率上限60%、自動調整済み",
     "cannotPledge": "1単元（1000株）未満のため担保設定不可",
     "overBorrowLimit": "借入上限を超過、追加借入不可。",

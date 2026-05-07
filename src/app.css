@@ -70,7 +70,7 @@
   --touch-target: 44px;
 
   /* Navbar */
-  --navbar-height: 56px;
+  --navbar-height: 64px;
 
   /* FAB */
   --fab-size: 56px;
@@ -1021,6 +1021,8 @@ body.modal-open {
   outline: none;
   cursor: pointer;
   margin-bottom: var(--spacing-sm);
+  /* slider 自行消化所有觸控手勢，避免水平拖動被外層 modal 當成滾動觸發 bounce */
+  touch-action: none;
 }
 
 .drawdown-slider::-webkit-slider-thumb {

@@ -80,13 +80,13 @@
     "avgCost": "Avg Cost",
     "marketPrice": "Market Price",
     "pledge": "Pledge",
-    "tdccTop": "Top {percent}%",
+    "tdccTop": "Shareholder Top {percent}%",
     "tdccLabel": "TDCC Shareholder Distribution",
     "tdccLevel": "Shareholding Range",
     "tdccHolders": "Holders",
     "tdccShares": "Shares",
     "tdccPercent": "Ratio %",
-    "tdccTopPercent": "Top %",
+    "tdccTopPercent": "Cumulative %",
     "tdccTotal": "Total"
   },
   "liability": {
@@ -322,6 +322,7 @@
     "maxDrop": "Max Drop",
     "pledgeRatio": "Pledge Ratio (%)",
     "loanAmountLimit": "Loan Amount (max {limit})",
+    "loanLimit": "Max",
     "pledgeLimitWarning": "TW stock pledge ratio capped at 60%, auto-adjusted",
     "cannotPledge": "Less than 1 lot (1000 shares), cannot pledge",
     "overBorrowLimit": "Exceeded borrowing limit, cannot borrow more.",

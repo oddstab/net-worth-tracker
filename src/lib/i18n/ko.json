@@ -80,13 +80,13 @@
     "avgCost": "평균 비용",
     "marketPrice": "시장 가격",
     "pledge": "담보",
-    "tdccTop": "상위 {percent}%",
+    "tdccTop": "주주 순위 상위 {percent}%",
     "tdccLabel": "주주 분포표",
     "tdccLevel": "보유 주식 구간",
     "tdccHolders": "인원",
     "tdccShares": "주식수",
     "tdccPercent": "비율 %",
-    "tdccTopPercent": "상위 %",
+    "tdccTopPercent": "누적 상위 %",
     "tdccTotal": "합　계"
   },
   "liability": {
@@ -322,6 +322,7 @@
     "maxDrop": "허용 하락폭",
     "pledgeRatio": "담보 비율 (%)",
     "loanAmountLimit": "대출 금액 (한도 {limit})",
+    "loanLimit": "한도",
     "pledgeLimitWarning": "대만 주식 담보 비율 상한 60%, 자동 조정됨",
     "cannotPledge": "1랏(1000주) 미만, 담보 설정 불가",
     "overBorrowLimit": "대출 한도 초과, 추가 대출 불가.",
