@@ -105,6 +105,44 @@
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
+/* ── Brawl Stars Theme ── */
+[data-theme="brawl"] {
+  --bg-primary: #e87a20;
+  --bg-secondary: #2d1a4e;
+  --bg-tertiary: #3a2060;
+  --bg-card: #ffd84a;
+  --bg-hover: #ffe066;
+
+  --text-primary: #1a0a00;
+  --text-secondary: #4a2800;
+  --text-muted: #8b5e34;
+  --text-inverse: #ffffff;
+
+  --accent-color: #5ddb3f;
+  --accent-hover: #7aef5c;
+  --accent-light: rgba(93, 219, 63, 0.2);
+
+  --color-positive: #5ddb3f;
+  --color-negative: #ff3b5c;
+  --color-warning: #ffa726;
+  --color-info: #42a5f5;
+
+  --chart-investment: #e040fb;
+  --chart-liquid: #5ddb3f;
+  --chart-debt: #ff3b5c;
+
+  --border-color: #1a0a00;
+  --border-radius-sm: 8px;
+  --border-radius-md: 14px;
+  --border-radius-lg: 20px;
+
+  --shadow-sm: 0 2px 0 #1a0a00, 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 0 #1a0a00, 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 6px 0 #1a0a00, 0 6px 20px rgba(0, 0, 0, 0.5);
+
+  --font-family: 'Lilita One', 'Bungee', 'Black Han Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
 /* ── Reset & Base ── */
 *,
 *::before,
@@ -3296,3 +3334,157 @@ body.modal-open {
   border-top: 2px solid var(--border-color);
   border-bottom: none;
 }
+
+
+/* ============================================================
+   Brawl Stars Theme — Extra Overrides
+   ============================================================ */
+
+/* Brawl: 卡片加粗邊框 + 底部陰影模擬立體感 */
+[data-theme="brawl"] .stat-card,
+[data-theme="brawl"] .chart-section,
+[data-theme="brawl"] .asset-category-section,
+[data-theme="brawl"] .settings-section {
+  border: 3px solid #1a0a00;
+  box-shadow: 0 4px 0 #1a0a00;
+}
+
+/* Brawl: Navbar 深紫色 + 粗底邊 */
+[data-theme="brawl"] .navbar,
+[data-theme="brawl"] .mobile-banner {
+  background-color: #2d1a4e;
+  border-bottom: 3px solid #1a0a00;
+}
+
+/* Brawl: Navbar 標題金色 */
+[data-theme="brawl"] .navbar-title {
+  color: #ffd84a;
+  text-shadow: 1px 1px 0 #1a0a00, 2px 2px 0 rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.02em;
+}
+
+/* Brawl: Nav tabs 白色文字 */
+[data-theme="brawl"] .nav-tab {
+  color: #e0d0ff;
+}
+
+[data-theme="brawl"] .nav-tab:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="brawl"] .nav-tab.active {
+  color: #ffd84a;
+  background-color: rgba(255, 216, 74, 0.15);
+}
+
+/* Brawl: 按鈕加粗邊框 */
+[data-theme="brawl"] .btn-primary {
+  border: 2px solid #1a0a00;
+  box-shadow: 0 3px 0 #1a0a00;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+[data-theme="brawl"] .btn-primary:active {
+  box-shadow: 0 1px 0 #1a0a00;
+  transform: translateY(2px);
+}
+
+[data-theme="brawl"] .btn-secondary {
+  border: 2px solid #1a0a00;
+  box-shadow: 0 3px 0 #1a0a00;
+  background-color: #fff3b0;
+  color: #1a0a00;
+  font-weight: 600;
+}
+
+[data-theme="brawl"] .btn-secondary:active {
+  box-shadow: 0 1px 0 #1a0a00;
+  transform: translateY(2px);
+}
+
+/* Brawl: FAB 加粗邊框 */
+[data-theme="brawl"] .fab {
+  border: 3px solid #1a0a00;
+  box-shadow: 0 4px 0 #1a0a00, 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="brawl"] .fab:active {
+  box-shadow: 0 1px 0 #1a0a00;
+  transform: translateY(3px);
+}
+
+/* Brawl: 資產分類標題深紫色背景 */
+[data-theme="brawl"] .asset-category-header {
+  background-color: #2d1a4e;
+  border-bottom: 2px solid #1a0a00;
+}
+
+[data-theme="brawl"] .asset-category-name {
+  color: #ffffff;
+}
+
+[data-theme="brawl"] .asset-category-total {
+  color: #ffd84a;
+}
+
+/* Brawl: 數值卡片文字加粗 */
+[data-theme="brawl"] .stat-value {
+  font-weight: 900;
+  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Brawl: Modal 深紫色 */
+[data-theme="brawl"] .modal {
+  border: 3px solid #1a0a00;
+  box-shadow: 0 6px 0 #1a0a00, 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="brawl"] .modal-header {
+  background-color: #2d1a4e;
+  border-bottom: 2px solid #1a0a00;
+}
+
+[data-theme="brawl"] .modal-title {
+  color: #ffd84a;
+}
+
+/* Brawl: 表單輸入框 */
+[data-theme="brawl"] .form-input,
+[data-theme="brawl"] .form-select {
+  border: 2px solid #1a0a00;
+  background-color: #fff8dc;
+  color: #1a0a00;
+}
+
+/* Brawl: 底部膠囊導覽列 */
+[data-theme="brawl"] .capsule-inner {
+  background: rgba(45, 26, 78, 0.92);
+  border: 2px solid #1a0a00;
+  box-shadow: 0 4px 0 #1a0a00, 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="brawl"] .capsule-tab {
+  color: #c0b0e0;
+}
+
+[data-theme="brawl"] .capsule-tab.active {
+  color: #ffd84a;
+}
+
+[data-theme="brawl"] .capsule-bubble {
+  background: rgba(255, 216, 74, 0.2);
+}
+
+/* Brawl: Toast */
+[data-theme="brawl"] .toast {
+  border: 2px solid #1a0a00;
+  box-shadow: 0 3px 0 #1a0a00;
+  background-color: #ffd84a;
+  color: #1a0a00;
+  font-weight: 600;
+}
+
+/* Brawl: 載入 Google Font（Lilita One 卡通字型）— 透過 app.html <link> 載入 */

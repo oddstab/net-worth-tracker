@@ -24,6 +24,43 @@
   import { snapshots } from '$lib/stores/snapshots.js';
   import { totals } from '$lib/stores/derived.js';
   import { autoSnapshot } from '$lib/services/snapshotManager.js';
+  import { initDB } from '$lib/services/idb.js';
+  import { hydrateStoresFromIDB } from '$lib/stores/hydrate.js';
+  import { backgroundImage, backgroundImages, currentImageIndex, loadBackgroundImage, backgroundOpacity } from '$lib/stores/backgroundImage.js';
+
+  /**
+   * 漸變切換：使用兩層 overlay 交替顯示。
+   * layerA / layerB 各持有一張圖片，activeLayer 指示哪層在前面。
+   */
+  let layerA = { url: null, visible: false };
+  let layerB = { url: null, visible: false };
+  let activeLayer = 'A'; // 'A' 或 'B'
+
+  // 監聽 backgroundImage 變化，觸發漸變
+  $: handleImageChange($backgroundImage);
+
+  function handleImageChange(newImage) {
+    if (!newImage) {
+      // 清除所有
+      layerA = { url: null, visible: false };
+      layerB = { url: null, visible: false };
+      return;
+    }
+
+    if (activeLayer === 'A') {
+      if (layerA.url === newImage) return; // 沒變
+      // 新圖放到 B 層，淡入 B、淡出 A
+      layerB = { url: newImage, visible: true };
+      layerA = { ...layerA, visible: false };
+      activeLayer = 'B';
+    } else {
+      if (layerB.url === newImage) return; // 沒變
+      // 新圖放到 A 層，淡入 A、淡出 B
+      layerA = { url: newImage, visible: true };
+      layerB = { ...layerB, visible: false };
+      activeLayer = 'A';
+    }
+  }
 
   /** 是否顯示 SW 更新提示 */
   let showUpdatePrompt = false;
@@ -43,7 +80,14 @@
   /** 響應式語言 key — 用於 {#key} 強制重新渲染子元件 */
   $: localeKey = $locale;
 
-  onMount(() => {
+  onMount(async () => {
+    // 初始化 IndexedDB 並從 localStorage 遷移資料
+    await initDB();
+    // 從 IndexedDB 載入最新資料更新各 store（覆蓋同步初始值）
+    await hydrateStoresFromIDB();
+    // 載入背景圖片設定
+    await loadBackgroundImage();
+
     registerServiceWorker();
 
     // 監聽 PWA 安裝提示（儲存事件供設定頁使用，並顯示安裝橫幅）
@@ -184,6 +228,21 @@
   }
 </script>
 
+{#if layerA.url}
+  <div
+    class="bg-overlay"
+    style="background-image: url({layerA.url}); opacity: {layerA.visible ? $backgroundOpacity : 0};"
+    aria-hidden="true"
+  ></div>
+{/if}
+{#if layerB.url}
+  <div
+    class="bg-overlay"
+    style="background-image: url({layerB.url}); opacity: {layerB.visible ? $backgroundOpacity : 0};"
+    aria-hidden="true"
+  ></div>
+{/if}
+
 {#key localeKey}
   <NavBar />
   <main class="main-content">
@@ -212,6 +271,18 @@
 {/if}
 
 <style>
+  /* ── 背景圖片覆蓋層 ── */
+  .bg-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    transition: opacity 1s ease-in-out;
+  }
+
   .sw-update-banner {
     position: fixed;
     bottom: 80px;

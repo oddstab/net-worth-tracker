@@ -7,6 +7,7 @@
 -->
 <script>
   import { exportData, importData } from '$lib/services/storage.js';
+  import { exportCSV, exportExcel, exportTxt } from '$lib/services/exportFormats.js';
   import { assets } from '$lib/stores/assets.js';
   import { liabilities } from '$lib/stores/liabilities.js';
   import { exchangeRate } from '$lib/stores/exchangeRate.js';
@@ -37,6 +38,30 @@
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
+    showToast(t('toast.dataExported'), 'success');
+  }
+
+  /**
+   * 匯出為 CSV 格式。
+   */
+  function handleExportCSV() {
+    exportCSV();
+    showToast(t('toast.dataExported'), 'success');
+  }
+
+  /**
+   * 匯出為 Excel (TSV) 格式。
+   */
+  function handleExportExcel() {
+    exportExcel();
+    showToast(t('toast.dataExported'), 'success');
+  }
+
+  /**
+   * 匯出為純文字格式。
+   */
+  function handleExportTxt() {
+    exportTxt();
     showToast(t('toast.dataExported'), 'success');
   }
 
@@ -94,6 +119,25 @@
       </p>
     </div>
 
+    <!-- 其他格式匯出 -->
+    <div class="export-formats">
+      <span class="export-formats-label">{t('settings.exportOtherFormats')}</span>
+      <div class="export-formats-btns">
+        <button class="btn btn-outline btn-sm" on:click={handleExportCSV}>
+          <Icon name="list" size={14}/> CSV
+        </button>
+        <button class="btn btn-outline btn-sm" on:click={handleExportExcel}>
+          <Icon name="chart" size={14}/> Excel
+        </button>
+        <button class="btn btn-outline btn-sm" on:click={handleExportTxt}>
+          <Icon name="list" size={14}/> TXT
+        </button>
+      </div>
+      <p style="font-size: var(--font-size-xs); color: var(--text-muted); margin-top: var(--spacing-xs);">
+        {t('settings.exportOtherDesc')}
+      </p>
+    </div>
+
     <!-- 匯入 -->
     <div>
       <button class="btn btn-secondary" style="width: 100%;" on:click={handleImportClick}>
@@ -115,3 +159,48 @@
     </div>
   </div>
 </section>
+
+<style>
+  .export-formats {
+    border: 1px solid var(--border-color, #333);
+    border-radius: var(--radius-md, 8px);
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+
+  .export-formats-label {
+    font-size: var(--font-size-sm);
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .export-formats-btns {
+    display: flex;
+    gap: var(--spacing-sm);
+  }
+
+  .btn-outline {
+    background: transparent;
+    border: 1px solid var(--border-color, #444);
+    color: var(--text-primary);
+    border-radius: var(--radius-sm, 6px);
+    padding: 6px 12px;
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: background 0.15s, border-color 0.15s;
+    min-height: 32px;
+  }
+
+  .btn-outline:hover {
+    background: var(--bg-hover, rgba(255, 255, 255, 0.05));
+    border-color: var(--color-accent, #4fc3f7);
+  }
+
+  .btn-sm {
+    flex: 1;
+    justify-content: center;
+  }
+</style>
