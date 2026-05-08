@@ -3407,6 +3407,27 @@ body.modal-open {
   transform: translateY(2px);
 }
 
+/* Brawl: btn-warning / btn-success / btn-info / btn-danger 也套用立體風格 */
+[data-theme="brawl"] .btn-warning,
+[data-theme="brawl"] .btn-success,
+[data-theme="brawl"] .btn-info,
+[data-theme="brawl"] .btn-danger {
+  border: 2px solid #1a0a00 !important;
+  box-shadow: 0 3px 0 #1a0a00 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+[data-theme="brawl"] .btn-warning:active,
+[data-theme="brawl"] .btn-success:active,
+[data-theme="brawl"] .btn-info:active,
+[data-theme="brawl"] .btn-danger:active {
+  box-shadow: 0 1px 0 #1a0a00 !important;
+  transform: translateY(2px) !important;
+}
+
 /* Brawl: FAB 加粗邊框 */
 [data-theme="brawl"] .fab {
   border: 3px solid #1a0a00;
@@ -3588,6 +3609,59 @@ body.modal-open {
   color: #6b4400;
 }
 
+/* Brawl: 分組圖例卡片（投資資產/債務）— 深紫底白字 */
+[data-theme="brawl"] .legend-category {
+  background: #2d1a4e;
+  border: 2px solid #1a0a00;
+  box-shadow: 0 3px 0 #1a0a00;
+}
+
+[data-theme="brawl"] .legend-category-header {
+  border-bottom-color: #4a3070;
+}
+
+[data-theme="brawl"] .legend-category-title {
+  color: #ffffff !important;
+  font-weight: 700;
+}
+
+[data-theme="brawl"] .legend-category-total {
+  color: #ffd84a !important;
+  font-weight: 700;
+}
+
+[data-theme="brawl"] .legend-category-rate {
+  background: #3a2060;
+  border-color: #1a0a00;
+  color: #ffa726;
+  font-weight: 700;
+}
+
+/* 子項目保持淺黃底深色字 */
+[data-theme="brawl"] .legend-item-detail {
+  background: #fff3b0;
+  border: 1px solid #c9a020;
+}
+
+[data-theme="brawl"] .legend-item-name {
+  color: #1a0a00;
+  font-weight: 700;
+}
+
+[data-theme="brawl"] .legend-item-amount {
+  color: #1a0a00;
+  font-weight: 700;
+}
+
+[data-theme="brawl"] .legend-item-percent {
+  color: #6b4400;
+  font-weight: 600;
+}
+
+[data-theme="brawl"] .legend-item-rate {
+  color: #8b5e34;
+}
+
 [data-theme="brawl"] .pie-net-worth-label {
   color: #3d2000;
 }
@@ -3599,23 +3673,67 @@ body.modal-open {
 
 /* Brawl: 趨勢圖時間範圍按鈕 */
 [data-theme="brawl"] .range-btn {
-  border-color: #1a0a00;
-  color: #1a0a00;
-  font-weight: 600;
-  background-color: #fff3b0;
+  border: 2px solid #1a0a00 !important;
+  box-shadow: 0 3px 0 #1a0a00 !important;
+  color: #1a0a00 !important;
+  font-weight: 700 !important;
+  background-color: #fff3b0 !important;
 }
 
 [data-theme="brawl"] .range-btn:hover {
-  border-color: #5ddb3f;
-  color: #1a0a00;
-  background-color: #ffe066;
+  background-color: #ffe066 !important;
 }
 
 [data-theme="brawl"] .range-btn.active {
-  background-color: #5ddb3f;
-  border-color: #1a0a00;
-  color: #ffffff;
-  font-weight: 700;
+  background-color: #5ddb3f !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="brawl"] .range-btn:active {
+  box-shadow: 0 1px 0 #1a0a00 !important;
+  transform: translateY(2px) !important;
+}
+
+/* Brawl: 盈虧日曆/圖表切換按鈕 — 荒野亂鬥風格（整顆實心膠囊，像 FAB） */
+[data-theme="brawl"] .view-toggle {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  overflow: visible !important;
+  gap: 8px !important;
+  padding: 0 !important;
+}
+
+[data-theme="brawl"] .view-toggle-btn {
+  color: #1a0a00 !important;
+  font-weight: 700 !important;
+  background: #fff3b0 !important;
+  border: 2px solid #1a0a00 !important;
+  border-radius: 999px !important;
+  box-shadow: 0 3px 0 #1a0a00 !important;
+  padding: 6px 16px !important;
+}
+
+[data-theme="brawl"] .view-toggle-btn:first-child,
+[data-theme="brawl"] .view-toggle-btn:last-child {
+  border-radius: 999px !important;
+}
+
+[data-theme="brawl"] .view-toggle-btn:hover {
+  background: #ffe066 !important;
+  color: #1a0a00 !important;
+}
+
+[data-theme="brawl"] .view-toggle-btn.active {
+  background: #5ddb3f !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="brawl"] .view-toggle-btn:active {
+  box-shadow: 0 1px 0 #1a0a00 !important;
+  transform: translateY(2px) !important;
 }
 
 /* Brawl: 底部膠囊導覽列 */
