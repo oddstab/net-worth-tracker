@@ -109,7 +109,7 @@
 [data-theme="brawl"] {
   --bg-primary: #e87a20;
   --bg-secondary: #2d1a4e;
-  --bg-tertiary: #3a2060;
+  --bg-tertiary: #fff3b0;   /* 淺黃色：大部分元件次級背景用此色，確保深色文字可讀 */
   --bg-card: #ffd84a;
   --bg-hover: #ffe066;
 
@@ -3481,6 +3481,13 @@ body.modal-open {
   border: 3px solid #1a0a00;
   box-shadow: 0 6px 0 #1a0a00, 0 8px 24px rgba(0, 0, 0, 0.5);
   background-color: #2d1a4e;
+  /* Modal 內覆寫變數：卡片背景用深紫色，文字用淺色 */
+  --bg-tertiary: #3a2060;
+  --bg-secondary: #241640;
+  --text-primary: #ffffff;
+  --text-secondary: #e8d8ff;
+  --text-muted: #b8a0d8;
+  --bg-card: #3a2060;
 }
 
 [data-theme="brawl"] .modal-header {
@@ -3503,7 +3510,7 @@ body.modal-open {
 }
 
 [data-theme="brawl"] .modal-body {
-  color: #e8e0f8;
+  color: #ffffff;
 }
 
 [data-theme="brawl"] .modal-footer {
@@ -3511,18 +3518,20 @@ body.modal-open {
   border-top-color: #4a3070;
 }
 
-/* Brawl: Modal 內的表單 label — 淺色 */
-[data-theme="brawl"] .modal .form-label {
-  color: #c0b0e0;
-  font-weight: 600;
+/* Brawl: Modal 內強制覆蓋 form 文字顏色（高優先級） */
+[data-theme="brawl"] .modal .form-label,
+[data-theme="brawl"] .modal label.form-label {
+  color: #e8d8ff !important;
+  font-weight: 700;
 }
 
-[data-theme="brawl"] .modal .form-hint {
-  color: #a090c0;
+[data-theme="brawl"] .modal .form-hint,
+[data-theme="brawl"] .modal span.form-hint {
+  color: #b8a0d8 !important;
 }
 
 [data-theme="brawl"] .modal .form-error {
-  color: #ff6b8a;
+  color: #ff6b8a !important;
 }
 
 /* Brawl: 表單輸入框 — 淺色背景深色文字 */
