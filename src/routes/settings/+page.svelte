@@ -18,6 +18,7 @@
   import DiagnosticTools from '../../components/settings/DiagnosticTools.svelte';
   import LanguageSelector from '../../components/settings/LanguageSelector.svelte';
   import GoogleIntegration from '../../components/settings/GoogleIntegration.svelte';
+  import BackgroundImageSetting from '../../components/settings/BackgroundImageSetting.svelte';
   import { t } from '$lib/services/i18n.js';
   import Icon from '../../components/Icon.svelte';
   import { showToast } from '$lib/stores/toast.js';
@@ -55,6 +56,7 @@
     </div>
     <div class="settings-col-right">
       <LanguageSelector />
+      <BackgroundImageSetting />
       <DiagnosticTools />
       <section class="settings-section">
         <h2 class="settings-section-title">{t('settings.about')}</h2>

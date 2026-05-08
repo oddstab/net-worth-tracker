@@ -7,6 +7,7 @@
 <script>
   import { page } from '$app/stores';
   import { base } from '$app/paths';
+  import { goto } from '$app/navigation';
   import { t } from '$lib/services/i18n.js';
   import { tStore } from '$lib/services/i18n.js';
   import { theme, toggleTheme } from '$lib/stores/theme.js';
@@ -29,20 +30,36 @@
   $: activeIndex = tabs.findIndex(tab => isActive(tab.href, $page.url.pathname));
 
   $: _t = $tStore;
+
+  /**
+   * 點擊標題：若已在首頁則捲到頂部，否則導航到首頁。
+   */
+  function handleTitleClick() {
+    const isHome = $page.url.pathname === base || $page.url.pathname === base + '/';
+    if (isHome) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      goto(base + '/');
+    }
+  }
 </script>
 
 <!-- 手機版：頂部 banner -->
 <div class="mobile-banner">
-  <span class="navbar-title">{t('common.appName')}</span>
+  <a href="{base}/" class="navbar-title-link" on:click|preventDefault={handleTitleClick}>
+    <span class="navbar-title">{t('common.appName')}</span>
+  </a>
   <button class="theme-toggle" on:click={toggleTheme} aria-label="Toggle theme">
-    {#if $theme === 'dark'}<Icon name="sun" size={18}/>{:else}<Icon name="moon" size={18}/>{/if}
+    {#if $theme === 'dark'}<Icon name="sun" size={18}/>{:else if $theme === 'light'}<Icon name="zap" size={18}/>{:else}<Icon name="moon" size={18}/>{/if}
   </button>
 </div>
 
 <!-- 桌面版：頂部導覽列 -->
 <nav class="navbar navbar-desktop" aria-label="主導覽列">
   <div class="navbar-brand">
-    <span class="navbar-title">{t('common.appName')}</span>
+    <a href="{base}/" class="navbar-title-link" on:click|preventDefault={handleTitleClick}>
+      <span class="navbar-title">{t('common.appName')}</span>
+    </a>
   </div>
   <div class="navbar-tabs" role="tablist">
     {#each tabs as tab}
@@ -57,7 +74,7 @@
       </a>
     {/each}
     <button class="theme-toggle" on:click={toggleTheme} aria-label="Toggle theme">
-      {#if $theme === 'dark'}<Icon name="sun" size={18}/>{:else}<Icon name="moon" size={18}/>{/if}
+      {#if $theme === 'dark'}<Icon name="sun" size={18}/>{:else if $theme === 'light'}<Icon name="zap" size={18}/>{:else}<Icon name="moon" size={18}/>{/if}
     </button>
   </div>
 </nav>
@@ -92,7 +109,7 @@
     .mobile-banner {
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       position: fixed;
       top: 0;
       left: 0;
@@ -102,6 +119,7 @@
       border-bottom: 1px solid var(--border-color);
       z-index: 100;
       overscroll-behavior: none;
+      padding: 0 var(--spacing-md);
     }
     .mobile-banner .navbar-title {
       font-size: var(--font-size-lg);
@@ -197,6 +215,11 @@
 
   a { text-decoration: none; }
 
+  .navbar-title-link {
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   .theme-toggle {
     background: transparent;
     border: none;
@@ -207,10 +230,15 @@
     transition: background var(--transition-fast), filter var(--transition-fast);
     line-height: 1;
     color: var(--text-secondary);
+    margin-left: var(--spacing-sm);
   }
   .theme-toggle:hover { background: var(--bg-hover); }
   :global([data-theme="dark"]) .theme-toggle {
     color: #fbbf24;
     filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.6));
+  }
+  :global([data-theme="brawl"]) .theme-toggle {
+    color: #ffd84a;
+    filter: drop-shadow(0 0 6px rgba(255, 216, 74, 0.6));
   }
 </style>
