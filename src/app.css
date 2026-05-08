@@ -113,18 +113,19 @@
   --bg-card: #ffd84a;
   --bg-hover: #ffe066;
 
+  /* 黃色卡片上的文字：深棕/黑色，確保對比度 */
   --text-primary: #1a0a00;
-  --text-secondary: #4a2800;
-  --text-muted: #8b5e34;
+  --text-secondary: #3d2000;
+  --text-muted: #6b4400;
   --text-inverse: #ffffff;
 
   --accent-color: #5ddb3f;
   --accent-hover: #7aef5c;
   --accent-light: rgba(93, 219, 63, 0.2);
 
-  --color-positive: #5ddb3f;
+  --color-positive: #2ecc40;
   --color-negative: #ff3b5c;
-  --color-warning: #ffa726;
+  --color-warning: #ff8c00;
   --color-info: #42a5f5;
 
   --chart-investment: #e040fb;
@@ -3385,6 +3386,7 @@ body.modal-open {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  color: #ffffff;
 }
 
 [data-theme="brawl"] .btn-primary:active {
@@ -3397,7 +3399,7 @@ body.modal-open {
   box-shadow: 0 3px 0 #1a0a00;
   background-color: #fff3b0;
   color: #1a0a00;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 [data-theme="brawl"] .btn-secondary:active {
@@ -3416,7 +3418,7 @@ body.modal-open {
   transform: translateY(3px);
 }
 
-/* Brawl: 資產分類標題深紫色背景 */
+/* Brawl: 資產分類標題深紫色背景 — 白色文字 */
 [data-theme="brawl"] .asset-category-header {
   background-color: #2d1a4e;
   border-bottom: 2px solid #1a0a00;
@@ -3424,54 +3426,204 @@ body.modal-open {
 
 [data-theme="brawl"] .asset-category-name {
   color: #ffffff;
+  font-weight: 700;
 }
 
 [data-theme="brawl"] .asset-category-total {
   color: #ffd84a;
+  font-weight: 700;
 }
 
 /* Brawl: 數值卡片文字加粗 */
-[data-theme="brawl"] .stat-value {
-  font-weight: 900;
-  text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.1);
+[data-theme="brawl"] .stat-card {
+  background-color: #ffd84a;
 }
 
-/* Brawl: Modal 深紫色 */
+[data-theme="brawl"] .stat-label {
+  color: #3d2000;
+  font-weight: 700;
+}
+
+[data-theme="brawl"] .stat-value {
+  font-weight: 900;
+  color: #1a0a00;
+  text-shadow: none;
+}
+
+/* Brawl: 資產項目 — 黃色背景深色文字 */
+[data-theme="brawl"] .asset-item {
+  border-bottom-color: #c9a020;
+}
+
+[data-theme="brawl"] .asset-item-name {
+  color: #1a0a00;
+  font-weight: 700;
+}
+
+[data-theme="brawl"] .asset-item-desc,
+[data-theme="brawl"] .asset-item-detail,
+[data-theme="brawl"] .asset-item-update {
+  color: #5a3800;
+}
+
+[data-theme="brawl"] .asset-item-twd {
+  color: #1a0a00;
+  font-weight: 700;
+}
+
+[data-theme="brawl"] .asset-item-value {
+  color: #2d1a4e;
+  font-weight: 700;
+}
+
+/* Brawl: Modal 深紫色 — 所有文字改為淺色 */
 [data-theme="brawl"] .modal {
   border: 3px solid #1a0a00;
   box-shadow: 0 6px 0 #1a0a00, 0 8px 24px rgba(0, 0, 0, 0.5);
+  background-color: #2d1a4e;
 }
 
 [data-theme="brawl"] .modal-header {
   background-color: #2d1a4e;
-  border-bottom: 2px solid #1a0a00;
+  border-bottom: 2px solid #4a3070;
 }
 
 [data-theme="brawl"] .modal-title {
   color: #ffd84a;
+  font-weight: 700;
 }
 
-/* Brawl: 表單輸入框 */
+[data-theme="brawl"] .modal-close {
+  color: #c0b0e0;
+}
+
+[data-theme="brawl"] .modal-close:hover {
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="brawl"] .modal-body {
+  color: #e8e0f8;
+}
+
+[data-theme="brawl"] .modal-footer {
+  background-color: #2d1a4e;
+  border-top-color: #4a3070;
+}
+
+/* Brawl: Modal 內的表單 label — 淺色 */
+[data-theme="brawl"] .modal .form-label {
+  color: #c0b0e0;
+  font-weight: 600;
+}
+
+[data-theme="brawl"] .modal .form-hint {
+  color: #a090c0;
+}
+
+[data-theme="brawl"] .modal .form-error {
+  color: #ff6b8a;
+}
+
+/* Brawl: 表單輸入框 — 淺色背景深色文字 */
 [data-theme="brawl"] .form-input,
 [data-theme="brawl"] .form-select {
   border: 2px solid #1a0a00;
   background-color: #fff8dc;
   color: #1a0a00;
+  font-weight: 600;
+}
+
+[data-theme="brawl"] .form-input::placeholder {
+  color: #8b7040;
+}
+
+/* Brawl: 設定頁面 — 黃色卡片上的文字 */
+[data-theme="brawl"] .settings-section-title {
+  color: #1a0a00;
+  font-weight: 700;
+}
+
+[data-theme="brawl"] .settings-section p,
+[data-theme="brawl"] .settings-section .form-label {
+  color: #3d2000;
+  font-weight: 600;
+}
+
+[data-theme="brawl"] .settings-section .form-hint {
+  color: #6b4400;
+}
+
+/* Brawl: 圖表區域 — 深紫色背景淺色文字 */
+[data-theme="brawl"] .chart-section {
+  background-color: #ffd84a;
+}
+
+[data-theme="brawl"] .section-title {
+  color: #1a0a00;
+  font-weight: 700;
+}
+
+/* Brawl: 圓餅圖圖例 */
+[data-theme="brawl"] .legend-label {
+  color: #3d2000;
+  font-weight: 600;
+}
+
+[data-theme="brawl"] .legend-amount {
+  color: #1a0a00;
+  font-weight: 700;
+}
+
+[data-theme="brawl"] .legend-percent {
+  color: #6b4400;
+}
+
+[data-theme="brawl"] .pie-net-worth-label {
+  color: #3d2000;
+}
+
+[data-theme="brawl"] .pie-net-worth-value {
+  color: #1a0a00;
+  font-weight: 900;
+}
+
+/* Brawl: 趨勢圖時間範圍按鈕 */
+[data-theme="brawl"] .range-btn {
+  border-color: #1a0a00;
+  color: #1a0a00;
+  font-weight: 600;
+  background-color: #fff3b0;
+}
+
+[data-theme="brawl"] .range-btn:hover {
+  border-color: #5ddb3f;
+  color: #1a0a00;
+  background-color: #ffe066;
+}
+
+[data-theme="brawl"] .range-btn.active {
+  background-color: #5ddb3f;
+  border-color: #1a0a00;
+  color: #ffffff;
+  font-weight: 700;
 }
 
 /* Brawl: 底部膠囊導覽列 */
 [data-theme="brawl"] .capsule-inner {
-  background: rgba(45, 26, 78, 0.92);
+  background: rgba(45, 26, 78, 0.95);
   border: 2px solid #1a0a00;
   box-shadow: 0 4px 0 #1a0a00, 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="brawl"] .capsule-tab {
   color: #c0b0e0;
+  font-weight: 600;
 }
 
 [data-theme="brawl"] .capsule-tab.active {
   color: #ffd84a;
+  font-weight: 700;
 }
 
 [data-theme="brawl"] .capsule-bubble {
@@ -3484,6 +3636,40 @@ body.modal-open {
   box-shadow: 0 3px 0 #1a0a00;
   background-color: #ffd84a;
   color: #1a0a00;
+  font-weight: 700;
+}
+
+/* Brawl: 無資料提示 */
+[data-theme="brawl"] .no-data-placeholder,
+[data-theme="brawl"] .empty-state {
+  color: #6b4400;
+  font-weight: 600;
+}
+
+/* Brawl: 所有 btn-icon 在黃色背景上 */
+[data-theme="brawl"] .btn-icon {
+  color: #3d2000;
+}
+
+[data-theme="brawl"] .btn-icon:hover {
+  color: #1a0a00;
+  background-color: rgba(0, 0, 0, 0.08);
+}
+
+/* Brawl: FAB 選單項目 */
+[data-theme="brawl"] .fab-menu-item {
+  background-color: #2d1a4e;
+  border-color: #1a0a00;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+[data-theme="brawl"] .fab-menu-item:hover {
+  background-color: #3a2060;
+}
+
+/* Brawl: 全域文字加粗 */
+[data-theme="brawl"] body {
   font-weight: 600;
 }
 
