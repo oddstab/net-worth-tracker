@@ -3428,6 +3428,114 @@ body.modal-open {
   transform: translateY(2px) !important;
 }
 
+/* Brawl: 小按鈕（資產列表上的編輯/刪除/明細按鈕） */
+[data-theme="brawl"] .btn-sm {
+  border: 2px solid #1a0a00 !important;
+  box-shadow: 0 2px 0 #1a0a00 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="brawl"] .btn-sm:active {
+  box-shadow: 0 0px 0 #1a0a00 !important;
+  transform: translateY(2px) !important;
+}
+
+[data-theme="brawl"] .btn-outline {
+  background: #fff3b0 !important;
+  color: #1a0a00 !important;
+}
+
+[data-theme="brawl"] .btn-outline:hover {
+  background: #ffe066 !important;
+  color: #1a0a00 !important;
+  border-color: #1a0a00 !important;
+}
+
+[data-theme="brawl"] .btn-outline-danger {
+  background: #fff3b0 !important;
+  color: #ff3b5c !important;
+}
+
+[data-theme="brawl"] .btn-outline-danger:hover {
+  background: #ff3b5c !important;
+  color: #ffffff !important;
+}
+
+[data-theme="brawl"] .btn-outline-accent {
+  background: #5ddb3f !important;
+  color: #ffffff !important;
+  border-color: #1a0a00 !important;
+}
+
+/* Brawl: 負債列表的 tag 標籤 — 也用立體風格 */
+[data-theme="brawl"] .liability-tag {
+  border: 2px solid #1a0a00 !important;
+  background: #2d1a4e !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 2px 0 #1a0a00 !important;
+}
+
+[data-theme="brawl"] .liability-tag-accent {
+  background: #5ddb3f !important;
+  color: #ffffff !important;
+}
+
+[data-theme="brawl"] .liability-tag-danger {
+  background: #ff3b5c !important;
+  color: #ffffff !important;
+}
+
+[data-theme="brawl"] .liability-tag-positive {
+  background: #2ecc40 !important;
+  color: #ffffff !important;
+}
+
+/* Brawl: 月曆上下月導航按鈕 */
+[data-theme="brawl"] .calendar-nav-btn {
+  border: 2px solid #1a0a00 !important;
+  box-shadow: 0 3px 0 #1a0a00 !important;
+  background: #fff3b0 !important;
+  color: #1a0a00 !important;
+  font-weight: 900 !important;
+}
+
+[data-theme="brawl"] .calendar-nav-btn:hover {
+  background: #ffe066 !important;
+  color: #1a0a00 !important;
+}
+
+[data-theme="brawl"] .calendar-nav-btn:active {
+  box-shadow: 0 1px 0 #1a0a00 !important;
+  transform: translateY(2px) !important;
+}
+
+/* Brawl: 貨幣切換按鈕 */
+[data-theme="brawl"] .currency-btn {
+  border: 2px solid #1a0a00 !important;
+  box-shadow: 0 3px 0 #1a0a00 !important;
+  background: #fff3b0 !important;
+  color: #1a0a00 !important;
+  font-weight: 700 !important;
+}
+
+[data-theme="brawl"] .currency-btn:hover {
+  background: #ffe066 !important;
+  color: #1a0a00 !important;
+  border-color: #1a0a00 !important;
+}
+
+[data-theme="brawl"] .currency-btn.active {
+  background: #5ddb3f !important;
+  color: #ffffff !important;
+  border-color: #1a0a00 !important;
+}
+
+[data-theme="brawl"] .currency-btn:active {
+  box-shadow: 0 1px 0 #1a0a00 !important;
+  transform: translateY(2px) !important;
+}
+
 /* Brawl: FAB 加粗邊框 */
 [data-theme="brawl"] .fab {
   border: 3px solid #1a0a00;
@@ -3738,7 +3846,7 @@ body.modal-open {
 
 /* Brawl: 底部膠囊導覽列 */
 [data-theme="brawl"] .capsule-inner {
-  background: rgba(45, 26, 78, 0.95);
+  background: #2d1a4e;
   border: 2px solid #1a0a00;
   box-shadow: 0 4px 0 #1a0a00, 0 6px 16px rgba(0, 0, 0, 0.4);
 }
