@@ -237,6 +237,7 @@
             <span class="tdcc-table-title">{t('asset.tdccLabel')}</span>
             <span class="tdcc-table-date">{tdccRanking.date}</span>
           </div>
+          <div class="tdcc-table-scroll">
           <table class="tdcc-table">
             <thead>
               <tr>
@@ -268,6 +269,7 @@
               </tr>
             </tfoot>
           </table>
+          </div>
         </div>
       {/if}
     {/if}

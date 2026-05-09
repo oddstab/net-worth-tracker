@@ -344,6 +344,8 @@
     "customPercent": "カスタム%",
     "deletePledgeFirst": "この株式には担保ローンがあります。削除すると維持率が130%を下回ります。先に担保ローンを削除してください。",
     "rePledgeRate": "再担保維持率",
-    "rePledgeRateDesc": "借入金をこの株式に再投資した場合、維持率は {rate}% になります"
+    "rePledgeRateDesc": "借入金をこの株式に再投資した場合、維持率は {rate}% になります",
+    "rePledgeMaxDrop": "再担保後の許容下落幅",
+    "rePledgeMaxDropDesc": "借入金を再投資した後、株価が耐えられる最大下落幅（維持率130%で強制決済）"
   }
 }

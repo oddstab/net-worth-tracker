@@ -186,6 +186,20 @@
     ? ((pledgeableMarketValue + loanInput) / totalBorrowed) * 100
     : 0;
 
+  // 再質押後可承受跌幅
+  // 再質押後市值 = 原市值 + 借款金額（假設借款全部再投入同一股票）
+  // 再質押後斷頭價 = 總借款 × 1.3 / 再質押後股數
+  // 再質押後股數 = (原市值 + 借款金額) / 每股價格
+  // 可承受跌幅 = (目前股價 - 再質押斷頭價) / 目前股價 × 100
+  $: rePledgeMaxDrop = (() => {
+    if (!loanInput || loanInput <= 0 || pricePerShare <= 0 || totalBorrowed <= 0) return 100;
+    const newMarketValue = pledgeableMarketValue + loanInput;
+    const newShares = newMarketValue / pricePerShare;
+    const rePledgeLiquidationPrice = (totalBorrowed * 1.3) / newShares;
+    return ((pricePerShare - rePledgeLiquidationPrice) / pricePerShare) * 100;
+  })();
+  $: isRePledgeDropWarning = rePledgeMaxDrop < 30;
+
   $: isOverLimit = pledgeRatio > 60;
 
   // 滑桿最小值 = 借到最大時的維持率 = 市值 / (已借 + 最大可借)
@@ -335,6 +349,18 @@
                 {rePledgeRate.toFixed(1)}% ({pureRateStatus(rePledgeRate)})
               </strong>
             </div>
+            <div class="pledge-info-row">
+              <span class="re-pledge-label">
+                {t('tools.rePledgeMaxDrop')}
+                <span class="info-tooltip-wrap">
+                  <Icon name="info" size={12}/>
+                  <span class="info-tooltip-text">{t('tools.rePledgeMaxDropDesc')}</span>
+                </span>
+              </span>
+              <strong style="color: {isRePledgeDropWarning ? 'var(--color-warning)' : 'var(--color-positive)'}">
+                -{rePledgeMaxDrop.toFixed(2)}%
+              </strong>
+            </div>
           {/if}
         </div>
       </div>
@@ -464,10 +490,13 @@
     font-weight: 400;
     padding: 6px 10px;
     border-radius: 6px;
-    white-space: nowrap;
+    white-space: normal;
+    max-width: min(280px, calc(100vw - 32px));
+    width: max-content;
     z-index: 100;
     pointer-events: none;
     box-shadow: var(--shadow-md);
+    word-break: break-word;
   }
   .info-tooltip-wrap:hover .info-tooltip-text {
     display: block;

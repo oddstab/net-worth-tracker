@@ -26,7 +26,7 @@
   import { autoSnapshot } from '$lib/services/snapshotManager.js';
   import { initDB } from '$lib/services/idb.js';
   import { hydrateStoresFromIDB } from '$lib/stores/hydrate.js';
-  import { backgroundImage, backgroundImages, currentImageIndex, loadBackgroundImage, backgroundOpacity } from '$lib/stores/backgroundImage.js';
+  import { backgroundImage, backgroundImages, currentImageIndex, loadBackgroundImage, backgroundOpacity, modalOpacity } from '$lib/stores/backgroundImage.js';
 
   /**
    * 漸變切換：使用兩層 overlay 交替顯示。
@@ -38,6 +38,11 @@
 
   // 監聽 backgroundImage 變化，觸發漸變
   $: handleImageChange($backgroundImage);
+
+  // 監聯 modalOpacity 變化，更新 CSS 變數
+  $: if (typeof document !== 'undefined') {
+    document.documentElement.style.setProperty('--modal-bg-opacity', String($modalOpacity));
+  }
 
   function handleImageChange(newImage) {
     if (!newImage) {
@@ -89,6 +94,9 @@
     await loadBackgroundImage();
 
     registerServiceWorker();
+
+    // 設定 Modal 透明度 CSS 變數
+    document.documentElement.style.setProperty('--modal-bg-opacity', String($modalOpacity));
 
     // 監聽 PWA 安裝提示（儲存事件供設定頁使用，並顯示安裝橫幅）
     window.addEventListener('beforeinstallprompt', (e) => {

@@ -188,6 +188,9 @@
     "imageFormatError": "僅支援 JPG、PNG、WebP 格式",
     "imageSizeError": "圖片大小不可超過 10MB",
     "opacity": "透明度",
+    "modalOpacity": "Modal 透明度",
+    "modalOpacityHint": "數值越高，彈窗越透明，越能看到背景圖",
+    "bgEnabled": "啟用背景圖片",
     "switchInterval": "切換間隔",
     "switchIntervalHint": "設為 0 秒則不自動切換",
     "removeAllImages": "移除全部"
@@ -344,6 +347,8 @@
     "customPercent": "自訂%",
     "deletePledgeFirst": "此股票有質押借款，刪除後維持率將低於 130%。請先刪除質押借款。",
     "rePledgeRate": "再質押維持率",
-    "rePledgeRateDesc": "若把借款再投入此股票，維持率將為 {rate}%"
+    "rePledgeRateDesc": "若把借款再投入此股票，維持率將為 {rate}%",
+    "rePledgeMaxDrop": "再質押可承受跌幅",
+    "rePledgeMaxDropDesc": "若把借款再投入此股票後，股價可承受的最大跌幅（維持率跌破 130% 觸發斷頭）"
   }
 }

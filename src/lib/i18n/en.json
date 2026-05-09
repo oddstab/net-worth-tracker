@@ -188,6 +188,9 @@
     "imageFormatError": "Only JPG, PNG, WebP formats are supported",
     "imageSizeError": "Image size must not exceed 10MB",
     "opacity": "Opacity",
+    "modalOpacity": "Modal Transparency",
+    "modalOpacityHint": "Higher value = more transparent modal, more background visible",
+    "bgEnabled": "Enable Background Image",
     "switchInterval": "Switch Interval",
     "switchIntervalHint": "Set to 0 to disable auto-switch",
     "removeAllImages": "Remove All"
@@ -344,6 +347,8 @@
     "customPercent": "Custom%",
     "deletePledgeFirst": "This stock has pledge loans. Deleting would drop maintenance below 130%. Please remove the pledge loan first.",
     "rePledgeRate": "Re-pledge Rate",
-    "rePledgeRateDesc": "If loan is reinvested in this stock, maintenance will be {rate}%"
+    "rePledgeRateDesc": "If loan is reinvested in this stock, maintenance will be {rate}%",
+    "rePledgeMaxDrop": "Re-pledge Max Drop",
+    "rePledgeMaxDropDesc": "Max price drop tolerable after reinvesting loan into this stock (triggers at 130% maintenance)"
   }
 }

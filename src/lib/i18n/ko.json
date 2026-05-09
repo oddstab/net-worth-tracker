@@ -344,6 +344,8 @@
     "customPercent": "직접입력%",
     "deletePledgeFirst": "이 주식에 담보 대출이 있습니다. 삭제하면 유지율이 130% 미만이 됩니다. 먼저 담보 대출을 삭제해주세요.",
     "rePledgeRate": "재담보 유지율",
-    "rePledgeRateDesc": "대출금을 이 주식에 재투자하면 유지율은 {rate}%가 됩니다"
+    "rePledgeRateDesc": "대출금을 이 주식에 재투자하면 유지율은 {rate}%가 됩니다",
+    "rePledgeMaxDrop": "재담보 후 허용 하락폭",
+    "rePledgeMaxDropDesc": "대출금을 재투자한 후 주가가 견딜 수 있는 최대 하락폭 (유지율 130%에서 반대매매)"
   }
 }

@@ -12,10 +12,13 @@ import { getItem, setItem, removeItem } from '$lib/services/idb.js';
 const IDB_KEY = 'nwt_background_images';       // 圖片陣列
 const OPACITY_KEY = 'nwt_background_opacity';   // 透明度
 const INTERVAL_KEY = 'nwt_background_interval'; // 切換秒數（0 = 不自動切換）
+const ENABLED_KEY = 'nwt_background_enabled';   // 開關
+const MODAL_OPACITY_KEY = 'nwt_modal_opacity';  // Modal 透明度
 
 // ── 預設值 ──
 const DEFAULT_OPACITY = 0.5;
 const DEFAULT_INTERVAL = 10; // 預設 10 秒切換
+const DEFAULT_MODAL_OPACITY = 0.85; // Modal 預設透明度
 
 // ── Stores ──
 
@@ -26,6 +29,25 @@ const DEFAULT_INTERVAL = 10; // 預設 10 秒切換
 export const backgroundImages = writable([]);
 
 /**
+ * 背景圖片開關（啟用/停用）
+ */
+function getInitialEnabled() {
+  if (typeof localStorage !== 'undefined') {
+    const saved = localStorage.getItem(ENABLED_KEY);
+    if (saved !== null) return saved === 'true';
+  }
+  return true; // 預設啟用
+}
+
+export const backgroundEnabled = writable(getInitialEnabled());
+
+backgroundEnabled.subscribe(($enabled) => {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(ENABLED_KEY, String($enabled));
+  }
+});
+
+/**
  * 當前顯示的圖片索引
  * @type {import('svelte/store').Writable<number>}
  */
@@ -34,11 +56,12 @@ export const currentImageIndex = writable(0);
 /**
  * 當前顯示的圖片（derived）
  * 保持向後相容：layout 使用此 store
+ * 當 backgroundEnabled 為 false 時回傳 null
  */
 export const backgroundImage = derived(
-  [backgroundImages, currentImageIndex],
-  ([$images, $index]) => {
-    if ($images.length === 0) return null;
+  [backgroundImages, currentImageIndex, backgroundEnabled],
+  ([$images, $index, $enabled]) => {
+    if (!$enabled || $images.length === 0) return null;
     const safeIndex = $index % $images.length;
     return $images[safeIndex] || null;
   }
@@ -63,6 +86,29 @@ export const backgroundOpacity = writable(getInitialOpacity());
 backgroundOpacity.subscribe(($opacity) => {
   if (typeof localStorage !== 'undefined') {
     localStorage.setItem(OPACITY_KEY, String($opacity));
+  }
+});
+
+/**
+ * Modal 透明度 store（0.5 ~ 1.0）
+ * 控制 Modal 背景的不透明度，讓背景圖片可以透出
+ */
+function getInitialModalOpacity() {
+  if (typeof localStorage !== 'undefined') {
+    const saved = localStorage.getItem(MODAL_OPACITY_KEY);
+    if (saved !== null) {
+      const val = parseFloat(saved);
+      if (!isNaN(val) && val >= 0.5 && val <= 1.0) return val;
+    }
+  }
+  return DEFAULT_MODAL_OPACITY;
+}
+
+export const modalOpacity = writable(getInitialModalOpacity());
+
+modalOpacity.subscribe(($opacity) => {
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem(MODAL_OPACITY_KEY, String($opacity));
   }
 });
 

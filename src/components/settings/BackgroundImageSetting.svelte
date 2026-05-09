@@ -15,6 +15,8 @@
     backgroundImages,
     backgroundOpacity,
     backgroundInterval,
+    backgroundEnabled,
+    modalOpacity,
     addBackgroundImages,
     removeBackgroundImage,
     clearAllBackgroundImages,
@@ -92,6 +94,14 @@
     backgroundOpacity.set(parseFloat(event.target.value));
   }
 
+  function handleModalOpacityChange(event) {
+    modalOpacity.set(parseFloat(event.target.value));
+  }
+
+  function handleToggleEnabled() {
+    backgroundEnabled.update(v => !v);
+  }
+
   function handleIntervalChange(event) {
     const val = parseInt(event.target.value, 10);
     backgroundInterval.set(isNaN(val) || val < 0 ? 0 : val);
@@ -138,6 +148,19 @@
 <section class="settings-section">
   <h2 class="settings-section-title">{t('settings.backgroundImage')}</h2>
   <p class="settings-desc">{t('settings.backgroundImageDesc')}</p>
+
+  <!-- 開關 -->
+  <div class="bg-toggle-row">
+    <span class="bg-toggle-label">{t('settings.bgEnabled')}</span>
+    <button
+      class="bg-toggle-btn"
+      class:active={$backgroundEnabled}
+      on:click={handleToggleEnabled}
+      aria-label="Toggle background"
+    >
+      <span class="bg-toggle-knob"></span>
+    </button>
+  </div>
 
   <!-- 隱藏的 file input（支援多選） -->
   <input
@@ -198,6 +221,26 @@
         class="drawdown-slider"
         style="background: linear-gradient(to right, var(--accent-color) {($backgroundOpacity - 0.01) / 0.89 * 100}%, var(--bg-tertiary) {($backgroundOpacity - 0.01) / 0.89 * 100}%);"
       />
+    </div>
+
+    <!-- Modal 透明度滑桿 -->
+    <div class="opacity-control">
+      <div class="opacity-header">
+        <label class="form-label" for="modal-opacity-slider">{t('settings.modalOpacity')}</label>
+        <span class="opacity-value">{Math.round((1 - $modalOpacity) * 100)}%</span>
+      </div>
+      <input
+        id="modal-opacity-slider"
+        type="range"
+        min="0"
+        max="0.5"
+        step="0.01"
+        value={1 - $modalOpacity}
+        on:input={(e) => modalOpacity.set(1 - parseFloat(e.target.value))}
+        class="drawdown-slider"
+        style="background: linear-gradient(to right, var(--accent-color) {(1 - $modalOpacity) / 0.5 * 100}%, var(--bg-tertiary) {(1 - $modalOpacity) / 0.5 * 100}%);"
+      />
+      <span class="form-hint">{t('settings.modalOpacityHint')}</span>
     </div>
 
     <!-- 切換間隔 -->
@@ -355,5 +398,51 @@
   .btn-danger-outline:hover {
     background-color: var(--color-negative);
     color: #fff;
+  }
+
+  /* Toggle switch */
+  .bg-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .bg-toggle-label {
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .bg-toggle-btn {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    border-radius: 13px;
+    border: none;
+    background: var(--bg-hover);
+    cursor: pointer;
+    transition: background 0.2s ease;
+    padding: 0;
+  }
+
+  .bg-toggle-btn.active {
+    background: var(--accent-color);
+  }
+
+  .bg-toggle-knob {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .bg-toggle-btn.active .bg-toggle-knob {
+    transform: translateX(22px);
   }
 </style>
