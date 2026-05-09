@@ -3717,38 +3717,38 @@ body.modal-open {
   color: #6b4400;
 }
 
-/* Brawl: 分組圖例卡片（投資資產/債務）— 深紫底白字 */
+/* Brawl: 分組圖例卡片（投資資產/債務）— 淺黃底粗黑邊 */
 [data-theme="brawl"] .legend-category {
-  background: #2d1a4e;
-  border: 2px solid #1a0a00;
-  box-shadow: 0 3px 0 #1a0a00;
+  background: #fff3b0 !important;
+  border: 2px solid #1a0a00 !important;
+  box-shadow: 0 3px 0 #1a0a00 !important;
 }
 
 [data-theme="brawl"] .legend-category-header {
-  border-bottom-color: #4a3070;
+  border-bottom-color: #c9a020 !important;
 }
 
 [data-theme="brawl"] .legend-category-title {
-  color: #ffffff !important;
+  color: #1a0a00 !important;
   font-weight: 700;
 }
 
 [data-theme="brawl"] .legend-category-total {
-  color: #ffd84a !important;
+  color: #1a0a00 !important;
   font-weight: 700;
 }
 
 [data-theme="brawl"] .legend-category-rate {
-  background: #3a2060;
-  border-color: #1a0a00;
-  color: #ffa726;
+  background: #ffd84a !important;
+  border-color: #1a0a00 !important;
+  color: #1a0a00 !important;
   font-weight: 700;
 }
 
-/* 子項目保持淺黃底深色字 */
+/* 子項目：更深的黃色對比，保持層次 */
 [data-theme="brawl"] .legend-item-detail {
-  background: #fff3b0;
-  border: 1px solid #c9a020;
+  background: #ffffff !important;
+  border: 1px solid #c9a020 !important;
 }
 
 [data-theme="brawl"] .legend-item-name {
