@@ -512,6 +512,39 @@
   .pledge-rate-btn:focus-visible { outline: 2px solid var(--accent-color); outline-offset: 2px; }
   .pledge-rate-btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
 
+  /* Brawl: 維持率快捷按鈕 — 粗邊框 + 立體陰影 */
+  :global([data-theme="brawl"]) .pledge-rate-btn {
+    border: 2px solid #1a0a00;
+    box-shadow: 0 3px 0 #1a0a00;
+    background: #3a2060;
+    color: #e0d0ff;
+    font-weight: 700;
+  }
+  :global([data-theme="brawl"]) .pledge-rate-btn:hover {
+    background: #4a3070;
+    color: #ffffff;
+    border-color: #1a0a00;
+  }
+  :global([data-theme="brawl"]) .pledge-rate-btn.active {
+    background: #1a7a10;
+    color: #ffffff;
+    border-color: #1a0a00;
+    box-shadow: 0 3px 0 #1a0a00;
+  }
+  :global([data-theme="brawl"]) .pledge-rate-btn:active {
+    box-shadow: 0 1px 0 #1a0a00;
+    transform: translateY(2px);
+  }
+
+  /* Brawl: 自訂% 輸入框 */
+  :global([data-theme="brawl"]) .pledge-rate-input {
+    border: 2px solid #1a0a00;
+    box-shadow: 0 3px 0 #1a0a00;
+    background: #fff8dc;
+    color: #1a0a00;
+    font-weight: 700;
+  }
+
   .pledge-rate-custom {
     display: flex;
     align-items: center;

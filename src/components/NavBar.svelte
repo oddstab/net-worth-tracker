@@ -166,6 +166,17 @@
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
     }
 
+    /* Brawl 膠囊：巧克力色實心膠囊 + 粗黑邊 + 立體底影（荒野亂鬥 UI 風格） */
+    :global([data-theme="brawl"]) .capsule-inner {
+      background: #5a3920;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      border: 3px solid #1a0a00;
+      border-radius: 999px;
+      padding: 6px;
+      box-shadow: 0 4px 0 #1a0a00, 0 6px 16px rgba(0, 0, 0, 0.45);
+    }
+
     /* 氣泡滑動指示器 — 定位在 padding 內部，跟 flex 子元素對齊 */
     .capsule-bubble {
       position: absolute;
@@ -176,6 +187,26 @@
       transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 0;
       pointer-events: none;
+    }
+
+    /* Brawl 氣泡：深綠 + 粗黑邊，活躍分頁才顯眼 */
+    :global([data-theme="brawl"]) .capsule-bubble {
+      top: 6px;
+      bottom: 6px;
+      background: #1a7a10;
+      border: 2px solid #1a0a00;
+      box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.25);
+    }
+
+    /* Brawl 分頁：金棕色文字，活躍分頁亮金黃 */
+    :global([data-theme="brawl"]) .capsule-tab {
+      color: #c89030;
+      font-weight: 700;
+    }
+    :global([data-theme="brawl"]) .capsule-tab.active {
+      color: #ffee8a;
+      font-weight: 800;
+      text-shadow: 1px 1px 0 #1a0a00;
     }
 
     .capsule-tab {

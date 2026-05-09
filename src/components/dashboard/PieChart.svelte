@@ -15,6 +15,7 @@
   import { liabilities as liabilitiesStore } from '$lib/stores/liabilities.js';
   import { exchangeRate as exchangeRateStore } from '$lib/stores/exchangeRate.js';
   import { locale } from '$lib/stores/locale.js';
+  import { theme } from '$lib/stores/theme.js';
   import { calculateAssetBreakdown } from '$lib/utils/calculator.js';
 
   Chart.register(DoughnutController, ArcElement, Tooltip);
@@ -23,6 +24,12 @@
   export let totals = { investmentTotal: 0, liquidTotal: 0, totalLiabilities: 0, netWorth: 0 };
 
   const PIE_COLORS = ['#6366f1', '#34d399'];
+
+  /** Brawl 主題專用配色 */
+  const BRAWL_PIE_COLORS = ['#2d1a4e', '#1a7a10'];
+
+  /** 根據主題取得圓餅圖配色 */
+  $: activePieColors = $theme === 'brawl' ? BRAWL_PIE_COLORS : PIE_COLORS;
 
   let canvasEl;
   let chartInstance = null;
@@ -37,6 +44,11 @@
   // 計算詳細明細
   $: breakdown = calculateAssetBreakdown($assetsStore, $liabilitiesStore, $exchangeRateStore);
 
+  /** 主題變更時重新渲染圖表 */
+  $: if ($theme && canvasEl && !allZero) {
+    renderChart();
+  }
+
   /**
    * 格式化淨資產為簡潔萬元格式
    * 使用 localeFormatter 的 formatCompact，已內建貨幣換算邏輯
@@ -49,12 +61,21 @@
     if (!canvasEl || allZero) { destroyChart(); return; }
     // Always destroy and recreate to pick up fresh i18n labels
     destroyChart();
+    const isBrawl = $theme === 'brawl';
+    const colors = isBrawl ? BRAWL_PIE_COLORS : PIE_COLORS;
     const ctx = canvasEl.getContext('2d');
     chartInstance = new Chart(ctx, {
       type: 'doughnut',
       data: {
         labels: [t('asset.investment'), t('dashboard.liabilities')],
-        datasets: [{ data: pieData.values, backgroundColor: PIE_COLORS, borderWidth: 0 }],
+        datasets: [{
+          data: pieData.values,
+          backgroundColor: colors,
+          borderWidth: isBrawl ? 4 : 0,
+          borderColor: isBrawl ? '#1a0a00' : undefined,
+          hoverBorderWidth: isBrawl ? 5 : 2,
+          hoverBorderColor: isBrawl ? '#1a0a00' : undefined,
+        }],
       },
       options: {
         cutout: '70%',
@@ -63,13 +84,19 @@
           tooltip: {
             enabled: false,
             external(context) {
+              // 確保只有一個 tooltip 元素
               let el = document.getElementById('pie-ext-tooltip');
               if (!el) {
                 el = document.createElement('div');
                 el.id = 'pie-ext-tooltip';
-                el.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;background:rgba(0,0,0,.85);color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;line-height:1.6;white-space:nowrap;transition:opacity .15s;';
                 document.body.appendChild(el);
               }
+              // 根據主題設定樣式
+              const brawl = document.documentElement.getAttribute('data-theme') === 'brawl';
+              el.style.cssText = brawl
+                ? 'position:fixed;pointer-events:none;z-index:9999;background:#2d1a4e;color:#fff;padding:12px 16px;border-radius:14px;font-size:13px;line-height:1.8;transition:opacity .15s;border:3px solid #1a0a00;box-shadow:0 4px 0 #1a0a00;max-width:280px;white-space:normal;'
+                : 'position:fixed;pointer-events:none;z-index:9999;background:rgba(20,20,40,.92);color:#fff;padding:12px 16px;border-radius:10px;font-size:13px;line-height:1.8;transition:opacity .15s;backdrop-filter:blur(8px);max-width:280px;white-space:normal;';
+
               const tm = context.tooltip;
               if (tm.opacity === 0) { el.style.opacity = '0'; return; }
 
@@ -78,25 +105,31 @@
                 const label = tm.dataPoints[0].label || '';
                 const value = formatCurrency(tm.dataPoints[0].parsed);
                 const list = idx === 0 ? breakdown.investmentAssets : breakdown.liabilityItems;
-                const details = list.map(i => `${i.name}: ${formatCurrency(i.amount)}`).join('<br>');
-                el.innerHTML = `<div style="font-weight:700;margin-bottom:4px">${label} ${value}</div>${details}`;
+
+                // 結構化 HTML：標題 + 分隔線 + 明細表格
+                let html = `<div style="font-weight:800;font-size:14px;margin-bottom:6px;border-bottom:1px solid rgba(255,255,255,0.2);padding-bottom:6px;">${label} ${value}</div>`;
+                html += '<table style="width:100%;border-collapse:collapse;">';
+                for (const item of list) {
+                  html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.08);">`;
+                  html += `<td style="padding:3px 0;font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${item.name}</td>`;
+                  html += `<td style="padding:3px 0 3px 8px;text-align:right;font-weight:700;white-space:nowrap;">${formatCurrency(item.amount)}</td>`;
+                  html += `</tr>`;
+                }
+                html += '</table>';
+                el.innerHTML = html;
               }
 
               const pos = context.chart.canvas.getBoundingClientRect();
               el.style.opacity = '1';
-              // 先定位，再檢查是否超出螢幕右邊
               let left = pos.left + tm.caretX;
-              let top = pos.top + tm.caretY - el.offsetHeight - 10;
-              // 超出右邊時靠左
+              let top = pos.top + tm.caretY - el.offsetHeight - 12;
               const elW = el.offsetWidth;
               if (left + elW > window.innerWidth - 8) {
                 left = window.innerWidth - elW - 8;
               }
-              // 超出左邊
               if (left < 8) left = 8;
-              // 超出上方時改到下方
               if (top < 8) {
-                top = pos.top + tm.caretY + 10;
+                top = pos.top + tm.caretY + 12;
               }
               el.style.left = left + 'px';
               el.style.top = top + 'px';
@@ -112,7 +145,7 @@
   function destroyChart() {
     if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
     const el = document.getElementById('pie-ext-tooltip');
-    if (el) el.style.opacity = '0';
+    if (el) { el.style.opacity = '0'; el.innerHTML = ''; }
   }
 
   function hideExtTooltip() {
@@ -161,7 +194,7 @@
         {#if breakdown.investmentAssets.length > 0}
           <div class="legend-category">
             <div class="legend-category-header">
-              <span class="legend-dot" style="background-color: {PIE_COLORS[0]};"></span>
+              <span class="legend-dot" style="background-color: {activePieColors[0]};"></span>
               <span class="legend-category-title">{t('asset.investment')}</span>
               <span class="legend-category-total">{formatCurrency(totals.investmentTotal + totals.liquidTotal)} ({pieData.percentages[0].toFixed(1)}%)</span>
             </div>
@@ -181,7 +214,7 @@
         {#if breakdown.liabilityItems.length > 0}
           <div class="legend-category">
             <div class="legend-category-header">
-              <span class="legend-dot" style="background-color: {PIE_COLORS[1]};"></span>
+              <span class="legend-dot" style="background-color: {activePieColors[1]};"></span>
               <span class="legend-category-title">{t('dashboard.liabilities')}</span>
               <span class="legend-category-total">{formatCurrency(totals.totalLiabilities)} ({pieData.percentages[1].toFixed(1)}%)</span>
             </div>

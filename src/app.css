@@ -119,17 +119,17 @@
   --text-muted: #6b4400;
   --text-inverse: #ffffff;
 
-  --accent-color: #5ddb3f;
-  --accent-hover: #7aef5c;
-  --accent-light: rgba(93, 219, 63, 0.2);
+  --accent-color: #1a7a10;
+  --accent-hover: #228b18;
+  --accent-light: rgba(46, 204, 64, 0.35);
 
-  --color-positive: #2ecc40;
-  --color-negative: #ff3b5c;
+  --color-positive: #1a7a10;
+  --color-negative: #b01030;
   --color-warning: #ff8c00;
   --color-info: #42a5f5;
 
   --chart-investment: #e040fb;
-  --chart-liquid: #5ddb3f;
+  --chart-liquid: #1a7a10;
   --chart-debt: #ff3b5c;
 
   --border-color: #1a0a00;
@@ -652,7 +652,7 @@ body {
   background: transparent;
   border: none;
   border-radius: var(--border-radius-sm);
-  color: var(--text-muted);
+  color: var(--text-secondary);
   cursor: pointer;
   font-size: var(--font-size-base);
   display: flex;
@@ -1256,7 +1256,10 @@ body.modal-open {
   color: var(--text-primary);
   font-size: var(--font-size-sm);
   box-shadow: var(--shadow-md);
-  white-space: nowrap;
+  white-space: normal;
+  max-width: calc(100vw - 32px);
+  text-align: center;
+  word-break: break-word;
   animation: fadeIn var(--transition-fast);
 }
 
@@ -2700,11 +2703,13 @@ body.modal-open {
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--text-secondary);
 }
 
 .btn-icon:hover {
   background: var(--bg-hover);
   transform: translateY(-1px);
+  color: var(--text-primary);
 }
 
 .btn-edit:hover {
@@ -2716,6 +2721,19 @@ body.modal-open {
 .btn-delete:hover {
   background: var(--color-negative);
   color: white;
+  border-color: var(--color-negative);
+}
+
+/* 刪除按鈕非 hover 狀態：淡紅背景 + 紅色 icon，確保辨識度 */
+.btn-icon.btn-delete {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: var(--color-negative);
+  color: var(--color-negative);
+}
+
+.btn-icon.btn-delete:hover {
+  background: var(--color-negative);
+  color: #ffffff;
   border-color: var(--color-negative);
 }
 
@@ -3115,6 +3133,7 @@ body.modal-open {
   align-items: center;
   justify-content: space-between;
   gap: var(--spacing-sm);
+  flex-wrap: wrap;
 }
 
 .liability-item-name {
@@ -3129,6 +3148,7 @@ body.modal-open {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
 }
 
 .liability-item-value {
@@ -3171,6 +3191,14 @@ body.modal-open {
   .liability-item {
     padding: var(--spacing-sm) var(--spacing-md);
   }
+
+  .liability-item-header {
+    flex-wrap: wrap;
+  }
+
+  .liability-item-name {
+    flex-basis: 100%;
+  }
   
   .holding-item {
     flex-direction: column;
@@ -3200,6 +3228,15 @@ body.modal-open {
   border: 1px solid var(--border-color);
   color: var(--text-secondary);
   white-space: nowrap;
+}
+
+/* Brawl: 質押標籤 — 粗邊框 + 立體陰影 */
+[data-theme="brawl"] .pledge-tag {
+  background: #fff8dc;
+  border: 2px solid #1a0a00;
+  box-shadow: 0 2px 0 #1a0a00;
+  color: #1a0a00;
+  font-weight: 800;
 }
 
 /* ── TDCC 集保排名標籤 ── */
@@ -3259,6 +3296,51 @@ body.modal-open {
 
 .tdcc-badge.tdcc-top20:hover {
   background: rgba(255, 145, 0, 0.18);
+}
+
+/* Brawl: TDCC 排名標籤 — 黃色卡片上需要更深的背景和邊框 */
+[data-theme="brawl"] .tdcc-badge {
+  background: #fff8dc;
+  border: 2px solid #1a0a00;
+  color: #1a0a00;
+  font-weight: 800;
+  box-shadow: 0 2px 0 #1a0a00;
+}
+
+[data-theme="brawl"] .tdcc-badge:hover {
+  background: #ffe066;
+  border-color: #1a0a00;
+  color: #1a0a00;
+}
+
+[data-theme="brawl"] .tdcc-badge.tdcc-top5 {
+  background: rgba(46, 204, 64, 0.35);
+  border-color: #1a7a10;
+  color: #1a7a10;
+}
+
+[data-theme="brawl"] .tdcc-badge.tdcc-top5:hover {
+  background: #b0eea8;
+}
+
+[data-theme="brawl"] .tdcc-badge.tdcc-top10 {
+  background: #d0e8ff;
+  border-color: #1a5ab8;
+  color: #1a5ab8;
+}
+
+[data-theme="brawl"] .tdcc-badge.tdcc-top10:hover {
+  background: #a8d4ff;
+}
+
+[data-theme="brawl"] .tdcc-badge.tdcc-top20 {
+  background: #fff0d0;
+  border-color: #a06000;
+  color: #a06000;
+}
+
+[data-theme="brawl"] .tdcc-badge.tdcc-top20:hover {
+  background: #ffe0a0;
 }
 
 /* ── TDCC 表格 ── */
@@ -3394,6 +3476,12 @@ body.modal-open {
   transform: translateY(2px);
 }
 
+[data-theme="brawl"] .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 #1a0a00;
+  filter: brightness(1.15);
+}
+
 [data-theme="brawl"] .btn-secondary {
   border: 2px solid #1a0a00;
   box-shadow: 0 3px 0 #1a0a00;
@@ -3405,6 +3493,12 @@ body.modal-open {
 [data-theme="brawl"] .btn-secondary:active {
   box-shadow: 0 1px 0 #1a0a00;
   transform: translateY(2px);
+}
+
+[data-theme="brawl"] .btn-secondary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 #1a0a00;
+  filter: brightness(1.15);
 }
 
 /* Brawl: btn-warning / btn-success / btn-info / btn-danger 也套用立體風格 */
@@ -3428,6 +3522,15 @@ body.modal-open {
   transform: translateY(2px) !important;
 }
 
+[data-theme="brawl"] .btn-warning:hover,
+[data-theme="brawl"] .btn-success:hover,
+[data-theme="brawl"] .btn-info:hover,
+[data-theme="brawl"] .btn-danger:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 0 #1a0a00 !important;
+  filter: brightness(1.15);
+}
+
 /* Brawl: 小按鈕（資產列表上的編輯/刪除/明細按鈕） */
 [data-theme="brawl"] .btn-sm {
   border: 2px solid #1a0a00 !important;
@@ -3440,6 +3543,12 @@ body.modal-open {
   transform: translateY(2px) !important;
 }
 
+[data-theme="brawl"] .btn-sm:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 0 #1a0a00 !important;
+  filter: brightness(1.15);
+}
+
 [data-theme="brawl"] .btn-outline {
   background: #fff3b0 !important;
   color: #1a0a00 !important;
@@ -3449,6 +3558,8 @@ body.modal-open {
   background: #ffe066 !important;
   color: #1a0a00 !important;
   border-color: #1a0a00 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 #1a0a00 !important;
 }
 
 [data-theme="brawl"] .btn-outline-danger {
@@ -3462,7 +3573,7 @@ body.modal-open {
 }
 
 [data-theme="brawl"] .btn-outline-accent {
-  background: #5ddb3f !important;
+  background: #1a7a10 !important;
   color: #ffffff !important;
   border-color: #1a0a00 !important;
 }
@@ -3477,7 +3588,7 @@ body.modal-open {
 }
 
 [data-theme="brawl"] .liability-tag-accent {
-  background: #5ddb3f !important;
+  background: #1a7a10 !important;
   color: #ffffff !important;
 }
 
@@ -3487,7 +3598,7 @@ body.modal-open {
 }
 
 [data-theme="brawl"] .liability-tag-positive {
-  background: #2ecc40 !important;
+  background: #1a7a10 !important;
   color: #ffffff !important;
 }
 
@@ -3526,7 +3637,7 @@ body.modal-open {
 }
 
 [data-theme="brawl"] .currency-btn.active {
-  background: #5ddb3f !important;
+  background: #1a7a10 !important;
   color: #ffffff !important;
   border-color: #1a0a00 !important;
 }
@@ -3793,7 +3904,7 @@ body.modal-open {
 }
 
 [data-theme="brawl"] .range-btn.active {
-  background-color: #5ddb3f !important;
+  background-color: #1a7a10 !important;
   color: #ffffff !important;
   font-weight: 700 !important;
 }
@@ -3834,7 +3945,7 @@ body.modal-open {
 }
 
 [data-theme="brawl"] .view-toggle-btn.active {
-  background: #5ddb3f !important;
+  background: #1a7a10 !important;
   color: #ffffff !important;
   font-weight: 700 !important;
 }
@@ -3844,26 +3955,8 @@ body.modal-open {
   transform: translateY(2px) !important;
 }
 
-/* Brawl: 底部膠囊導覽列 */
-[data-theme="brawl"] .capsule-inner {
-  background: #2d1a4e;
-  border: 2px solid #1a0a00;
-  box-shadow: 0 4px 0 #1a0a00, 0 6px 16px rgba(0, 0, 0, 0.4);
-}
-
-[data-theme="brawl"] .capsule-tab {
-  color: #c0b0e0;
-  font-weight: 600;
-}
-
-[data-theme="brawl"] .capsule-tab.active {
-  color: #ffd84a;
-  font-weight: 700;
-}
-
-[data-theme="brawl"] .capsule-bubble {
-  background: rgba(255, 216, 74, 0.2);
-}
+/* Brawl: 底部膠囊導覽列樣式已移至 NavBar.svelte 元件內（使用 :global()
+   提升 specificity 以覆蓋 Svelte scoped class），此處不再重複定義。 */
 
 /* Brawl: Toast */
 [data-theme="brawl"] .toast {
@@ -3884,11 +3977,19 @@ body.modal-open {
 /* Brawl: 所有 btn-icon 在黃色背景上 */
 [data-theme="brawl"] .btn-icon {
   color: #3d2000;
+  background: #fff8dc;
+  border: 2px solid #1a0a00;
+  box-shadow: 0 2px 0 #1a0a00;
 }
 
 [data-theme="brawl"] .btn-icon:hover {
   color: #1a0a00;
-  background-color: rgba(0, 0, 0, 0.08);
+  background: #ffe066;
+}
+
+[data-theme="brawl"] .btn-icon:active {
+  box-shadow: 0 0 0 #1a0a00;
+  transform: translateY(2px);
 }
 
 /* Brawl: FAB 選單項目 */

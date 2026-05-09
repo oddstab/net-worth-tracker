@@ -393,6 +393,56 @@
     background: rgba(255, 23, 68, 0.10);
   }
 
+  /* Brawl theme overrides — 黃色卡片上需要更飽和的背景色 */
+  :global([data-theme="brawl"]) .calendar-cell.positive-bg {
+    background: rgba(46, 204, 64, 0.35);
+    border: 2px solid #1a7a10;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
+  :global([data-theme="brawl"]) .calendar-cell.negative-bg {
+    background: rgba(255, 59, 92, 0.30);
+    border: 2px solid #a01030;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+  :global([data-theme="brawl"]) .cell-day {
+    color: #1a0a00;
+    font-weight: 800;
+  }
+  :global([data-theme="brawl"]) .cell-pnl.positive {
+    color: #1a7a10;
+    font-weight: 800;
+  }
+  :global([data-theme="brawl"]) .cell-pnl.negative {
+    color: #b01030;
+    font-weight: 800;
+  }
+  :global([data-theme="brawl"]) .calendar-weekday {
+    color: #3d2000;
+    font-weight: 800;
+  }
+  :global([data-theme="brawl"]) .calendar-month-label {
+    color: #1a0a00;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  :global([data-theme="brawl"]) .calendar-summary {
+    color: #3d2000;
+  }
+  :global([data-theme="brawl"]) .summary-item strong.positive {
+    color: #1a7a10;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  :global([data-theme="brawl"]) .summary-item strong.negative {
+    color: #b01030;
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  :global([data-theme="brawl"]) .calendar-tooltip {
+    background: #2d1a4e;
+    border: 2px solid #1a0a00;
+    box-shadow: 0 4px 0 #1a0a00, 0 6px 16px rgba(0, 0, 0, 0.4);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
   .cell-day {
     font-size: var(--font-size-sm);
     font-weight: 600;

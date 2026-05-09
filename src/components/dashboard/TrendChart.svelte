@@ -23,6 +23,7 @@
   import { t } from '$lib/services/i18n.js';
   import { formatCurrency } from '$lib/services/localeFormatter.js';
   import { filterSnapshotsByRange, filterSnapshotsByCustomRange } from '$lib/services/snapshotManager.js';
+  import { theme } from '$lib/stores/theme.js';
   import PnlCalendar from './PnlCalendar.svelte';
   import Icon from '../Icon.svelte';
 
@@ -61,12 +62,61 @@
   /** 是否無資料 */
   $: hasNoData = filteredSnapshots.length === 0;
 
+  /** 主題變更時重新渲染圖表 */
+  $: if ($theme && canvasEl) {
+    renderChart();
+  }
+
   /**
    * 切換時間範圍。
    * @param {string} range — 時間範圍代碼
    */
   function selectRange(range) {
     currentRange = range;
+  }
+
+  /**
+   * 根據主題取得圖表配色。
+   */
+  function getChartColors() {
+    const currentTheme = $theme;
+    if (currentTheme === 'brawl') {
+      return {
+        lineColor: '#1a7a10',
+        fillColor: 'rgba(46, 204, 64, 0.35)',
+        pointColor: '#1a7a10',
+        pointBorderColor: '#1a0a00',
+        gridColor: 'rgba(26, 10, 0, 0.12)',
+        tickColor: '#3d2000',
+        tooltipBg: '#2d1a4e',
+        tooltipText: '#ffffff',
+        tooltipBorder: '#1a0a00',
+      };
+    } else if (currentTheme === 'light') {
+      return {
+        lineColor: '#00c853',
+        fillColor: 'rgba(0, 200, 83, 0.1)',
+        pointColor: '#00c853',
+        pointBorderColor: '#ffffff',
+        gridColor: 'rgba(0, 0, 0, 0.06)',
+        tickColor: '#3c3c3c',
+        tooltipBg: '#ffffff',
+        tooltipText: '#1a1a1a',
+        tooltipBorder: '#d0d0d0',
+      };
+    }
+    // dark (default)
+    return {
+      lineColor: '#7c6af7',
+      fillColor: 'rgba(124, 106, 247, 0.1)',
+      pointColor: '#7c6af7',
+      pointBorderColor: '#1a1a2e',
+      gridColor: 'rgba(255, 255, 255, 0.05)',
+      tickColor: '#a0a0b8',
+      tooltipBg: 'rgba(26, 26, 46, 0.9)',
+      tooltipText: '#ffffff',
+      tooltipBorder: 'rgba(255, 255, 255, 0.1)',
+    };
   }
 
   /**
@@ -81,8 +131,10 @@
     // Always destroy and recreate to pick up fresh i18n labels
     destroyChart();
 
+    const colors = getChartColors();
     const labels = filteredSnapshots.map(s => s.date);
     const data = filteredSnapshots.map(s => s.netWorth);
+    const isBrawl = $theme === 'brawl';
 
     const ctx = canvasEl.getContext('2d');
     chartInstance = new Chart(ctx, {
@@ -92,12 +144,15 @@
         datasets: [{
           label: t('dashboard.netWorth'),
           data,
-          borderColor: '#7c6af7',
-          backgroundColor: 'rgba(124, 106, 247, 0.1)',
-          borderWidth: 2,
-          pointRadius: data.length > 30 ? 0 : 3,
-          pointHoverRadius: 6,
+          borderColor: colors.lineColor,
+          backgroundColor: colors.fillColor,
+          borderWidth: isBrawl ? 4 : 2,
+          pointRadius: data.length > 30 ? 0 : (isBrawl ? 5 : 3),
+          pointHoverRadius: isBrawl ? 8 : 6,
           pointHitRadius: 20,
+          pointBackgroundColor: isBrawl ? '#ffd84a' : colors.pointColor,
+          pointBorderColor: isBrawl ? '#1a0a00' : colors.pointBorderColor,
+          pointBorderWidth: isBrawl ? 2 : 1,
           fill: true,
           tension: 0.4,
           cubicInterpolationMode: 'monotone',
@@ -108,7 +163,7 @@
         maintainAspectRatio: false,
         interaction: {
           mode: 'index',
-          intersect: false,  // 不需要精確點到點，手指靠近就觸發
+          intersect: false,
         },
         plugins: {
           legend: { display: false },
@@ -119,29 +174,37 @@
               label: (context) => ` ${formatCurrency(context.parsed.y)}`,
             },
             padding: 10,
-            cornerRadius: 8,
+            cornerRadius: isBrawl ? 12 : 8,
             displayColors: false,
+            backgroundColor: colors.tooltipBg,
+            titleColor: colors.tooltipText,
+            bodyColor: colors.tooltipText,
+            borderColor: colors.tooltipBorder,
+            borderWidth: isBrawl ? 2 : 0,
+            titleFont: { weight: isBrawl ? '800' : '600' },
+            bodyFont: { weight: isBrawl ? '700' : '400' },
           },
         },
         scales: {
           x: {
-            grid: { color: 'rgba(255,255,255,0.05)' },
+            grid: { color: colors.gridColor },
             ticks: {
-              color: '#a0a0b8',
+              color: colors.tickColor,
+              font: { weight: isBrawl ? '700' : '400' },
               maxTicksLimit: 6,
               maxRotation: 45,
               minRotation: 45,
               callback(value) {
                 const label = this.getLabelForValue(value);
-                // 'YYYY-MM-DD' → 'MM/DD'
                 return label.slice(5);
               },
             },
           },
           y: {
-            grid: { color: 'rgba(255,255,255,0.05)' },
+            grid: { color: colors.gridColor },
             ticks: {
-              color: '#a0a0b8',
+              color: colors.tickColor,
+              font: { weight: isBrawl ? '700' : '400' },
               callback: (value) => formatCurrency(Number(value)),
             },
           },
