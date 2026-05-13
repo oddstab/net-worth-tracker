@@ -193,7 +193,8 @@
     "bgEnabled": "啟用背景圖片",
     "switchInterval": "切換間隔",
     "switchIntervalHint": "設為 0 秒則不自動切換",
-    "removeAllImages": "移除全部"
+    "removeAllImages": "移除全部",
+    "sliderHint": "長按滑桿後才能拖動，防止滾動時誤觸"
   },
   "currency": {
     "TWD": "新台幣",

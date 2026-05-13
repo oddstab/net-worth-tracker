@@ -108,6 +108,65 @@
     startSlideshow();
   }
 
+  // ── 防誤觸：滑桿需長按 300ms 才啟動拖動 ──
+  /** 是否已解鎖滑桿（長按後才允許拖動） */
+  let sliderUnlocked = false;
+  /** 長按計時器 */
+  let sliderLockTimer = null;
+  /** 長按啟動門檻（毫秒） */
+  const SLIDER_LOCK_DELAY = 300;
+
+  /**
+   * touchstart：開始計時，到達門檻後解鎖滑桿。
+   * 在解鎖前阻止 input 事件傳遞。
+   */
+  function onSliderTouchStart(event) {
+    sliderUnlocked = false;
+    sliderLockTimer = setTimeout(() => {
+      sliderUnlocked = true;
+      // 給予觸覺回饋（如果瀏覽器支援）
+      if (navigator.vibrate) navigator.vibrate(10);
+    }, SLIDER_LOCK_DELAY);
+  }
+
+  /**
+   * touchend / touchcancel：清除計時器並重新鎖定。
+   */
+  function onSliderTouchEnd() {
+    clearTimeout(sliderLockTimer);
+    sliderLockTimer = null;
+    // 延遲重新鎖定，讓最後一次 input 事件能正常觸發
+    setTimeout(() => { sliderUnlocked = false; }, 50);
+  }
+
+  /**
+   * 包裝 input handler：只有解鎖後才允許更新值。
+   */
+  function guardedOpacityChange(event) {
+    if (!sliderUnlocked) {
+      // 還原為目前值，阻止誤觸改變
+      event.target.value = $backgroundOpacity;
+      return;
+    }
+    handleOpacityChange(event);
+  }
+
+  function guardedModalOpacityChange(event) {
+    if (!sliderUnlocked) {
+      event.target.value = 1 - $modalOpacity;
+      return;
+    }
+    modalOpacity.set(1 - parseFloat(event.target.value));
+  }
+
+  function guardedIntervalChange(event) {
+    if (!sliderUnlocked) {
+      event.target.value = $backgroundInterval;
+      return;
+    }
+    handleIntervalChange(event);
+  }
+
   // ── 拖曳排序 ──
   function onDragStart(index) {
     dragIndex = index;
@@ -217,10 +276,14 @@
         max="0.9"
         step="0.01"
         value={$backgroundOpacity}
-        on:input={handleOpacityChange}
+        on:input={guardedOpacityChange}
+        on:touchstart={onSliderTouchStart}
+        on:touchend={onSliderTouchEnd}
+        on:touchcancel={onSliderTouchEnd}
         class="drawdown-slider"
         style="background: linear-gradient(to right, var(--accent-color) {($backgroundOpacity - 0.01) / 0.89 * 100}%, var(--bg-tertiary) {($backgroundOpacity - 0.01) / 0.89 * 100}%);"
       />
+      <span class="form-hint">{t('settings.sliderHint')}</span>
     </div>
 
     <!-- Modal 透明度滑桿 -->
@@ -236,7 +299,10 @@
         max="0.5"
         step="0.01"
         value={1 - $modalOpacity}
-        on:input={(e) => modalOpacity.set(1 - parseFloat(e.target.value))}
+        on:input={guardedModalOpacityChange}
+        on:touchstart={onSliderTouchStart}
+        on:touchend={onSliderTouchEnd}
+        on:touchcancel={onSliderTouchEnd}
         class="drawdown-slider"
         style="background: linear-gradient(to right, var(--accent-color) {(1 - $modalOpacity) / 0.5 * 100}%, var(--bg-tertiary) {(1 - $modalOpacity) / 0.5 * 100}%);"
       />
@@ -258,7 +324,10 @@
             max="60"
             step="1"
             value={$backgroundInterval}
-            on:input={handleIntervalChange}
+            on:input={guardedIntervalChange}
+            on:touchstart={onSliderTouchStart}
+            on:touchend={onSliderTouchEnd}
+            on:touchcancel={onSliderTouchEnd}
             class="drawdown-slider"
             style="background: linear-gradient(to right, var(--accent-color) {$backgroundInterval / 60 * 100}%, var(--bg-tertiary) {$backgroundInterval / 60 * 100}%);"
           />
